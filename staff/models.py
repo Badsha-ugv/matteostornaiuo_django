@@ -5,10 +5,20 @@ from datetime import datetime
 from django.utils import timezone
 from django.core.validators import ValidationError
 from dateutil.relativedelta import relativedelta
-
 from users.models import JobRole, Skill
 
+from project.s3bucket import CustomS3Storage
+
+
 User = get_user_model()
+
+
+
+
+
+
+
+
 
 
 class Staff(models.Model):
@@ -19,13 +29,14 @@ class Staff(models.Model):
     address = models.CharField(max_length=300, blank=True)
     dob = models.DateField(blank=True)
     age = models.IntegerField(null=True, blank=True)
-    avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
+    # avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
+    avatar = models.ImageField(blank=True, null=True, storage=CustomS3Storage(), upload_to="staff/avatar/")
     about = models.TextField(blank=True)
     gender = models.CharField(max_length=5, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
     post_code = models.CharField(max_length=20, blank=True, null=True)
-    cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
-    video_cv = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
+    cv = models.FileField(blank=True, null=True, storage=CustomS3Storage(), upload_to='staff/cv/')
+    video_cv = models.FileField(blank=True, null=True, storage=CustomS3Storage(), upload_to='staff/video_resume/')
 
     # role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")

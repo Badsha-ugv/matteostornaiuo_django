@@ -6,7 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 User = get_user_model()
 from staff.models import Staff
 from client.models import CompanyProfile, Vacancy
-
+from project.s3bucket import CustomS3Storage
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)# to whom
@@ -26,7 +26,7 @@ class Report(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     type = models.CharField(max_length=100)
     message = models.TextField()
-    attachment = models.FileField(upload_to='reports/', blank=True, null=True)
+    attachment = models.FileField(upload_to='reports/', storage=CustomS3Storage(), blank=True, null=True)
     is_resolved = models.BooleanField(default=False)
     
 
@@ -53,7 +53,7 @@ class FAQ(models.Model):
 class TermsAndConditions(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True, null=True)
-    document = models.FileField(upload_to='terms_and_conditions/', blank=True, null=True)
+    document = models.FileField(upload_to='terms_and_conditions/',storage=CustomS3Storage(), blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

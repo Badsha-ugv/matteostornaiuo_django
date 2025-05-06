@@ -8,7 +8,11 @@ import dj_database_url
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
 
+
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,7 +23,7 @@ SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
+ALLOWED_HOSTS = ['admin.letme.no', '*']
 
 
 INSTALLED_APPS = [
@@ -39,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework_simplejwt",
+    "storages",
     "users",
     "client",
     "staff",
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     "homedashbord",
     "celeryapi",
+
 
     
     
@@ -116,12 +122,12 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -136,7 +142,7 @@ DATABASES = {
         'NAME': 'matteostornaiuo',
         'USER': 'matteostornaiuo',
         'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '51.20.35.242',
+        'HOST': '13.53.162.107',
         'PORT': '5432',
     }
 }
@@ -210,7 +216,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://letme-frontend-web.netlify.app',
     'https://letme.no',
     'https://www.letme.no',
-
+    'https://test.letme.no',
+    'https://www.test.letme.no',
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
@@ -219,6 +226,8 @@ CSRF_TRUSTED_ORIGINS = [
 
     'https://www.letme.no',
     'https://letme.no'
+    'https://test.letme.no',
+    'https://www.test.letme.no',
 ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
@@ -263,6 +272,28 @@ STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
+
+
+
+
+
+# AWS S3 settings
+# AWS Configuration
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
+
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+
+# Configure Django-Storages
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None
+
+
+
+
 
 
 
