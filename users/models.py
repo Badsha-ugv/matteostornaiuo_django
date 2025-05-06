@@ -66,7 +66,7 @@ class Uniform(models.Model):
     )
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to="images/uniforms/", storage=CustomS3Storage(), blank=True, null=True)
+    image = models.ImageField(upload_to="images/uniforms/", max_length=255, storage=CustomS3Storage(), blank=True, null=True)
     def __str__(self):
         return f'{self.job_role} - {self.name}'
 

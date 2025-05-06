@@ -20,7 +20,7 @@ class CompanyProfile(models.Model):
     company_address = models.CharField(max_length=200)
     tax_number = models.PositiveIntegerField(blank=True, null=True)
     company_details  = models.TextField(blank=True)
-    company_logo = models.ImageField(blank=True, null=True,storage=CustomS3Storage(), upload_to='images/company/logo/')
+    company_logo = models.ImageField(blank=True, null=True, max_length=255 ,storage=CustomS3Storage(), upload_to='images/company/logo/')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

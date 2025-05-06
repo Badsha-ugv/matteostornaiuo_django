@@ -21,7 +21,7 @@ class Staff(models.Model):
     dob = models.DateField(blank=True)
     age = models.IntegerField(null=True, blank=True)
     # avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
-    avatar = models.ImageField(blank=True, null=True, storage=CustomS3Storage(), upload_to="staff/avatar/")
+    avatar = models.ImageField(blank=True, null=True, max_length=255, storage=CustomS3Storage(), upload_to="staff/avatar/")
     about = models.TextField(blank=True)
     gender = models.CharField(max_length=5, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
