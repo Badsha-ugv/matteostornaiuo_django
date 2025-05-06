@@ -12,15 +12,6 @@ from project.s3bucket import CustomS3Storage
 
 User = get_user_model()
 
-
-
-
-
-
-
-
-
-
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.ForeignKey(JobRole, on_delete=models.SET_NULL, null=True)
