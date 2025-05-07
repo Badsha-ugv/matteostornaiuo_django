@@ -1,6 +1,6 @@
 from rest_framework import serializers 
 
-from .models import Notification,TermsAndConditions,Report
+from .models import Notification,TermsAndConditions,Report, LetmeReview
 from staff.serializers import StaffSerializer
 from client.models import Vacancy
 from client.serializers import JobViewSerializers, VacancySerializer
@@ -39,3 +39,9 @@ class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = '__all__'
+
+class LetmeReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LetmeReview
+        fields = '__all__'
+        

@@ -14,12 +14,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
 # Create your views here.
-from .models import  Notification, Report, FAQ, TermsAndConditions
+from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview
 from . serializers import (
     NotificationSerializer, 
     SkillSerializer,
     TermsAndConditionsSerializer,
-    ReportSerializer
+    ReportSerializer,
+    LetmeReviewSerializer
 
 )
 
@@ -495,6 +496,22 @@ class TermsAPIView(APIView):
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "List of Terms and Conditions",
+            "data": serializers.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
+    
+
+class LetMeReviewAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        reviews = LetmeReview.objects.all()
+        serializers = LetmeReviewSerializer(reviews, many=True)
+
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of LetmeReview",
             "data": serializers.data
         }
         return Response(response, status=status.HTTP_200_OK)

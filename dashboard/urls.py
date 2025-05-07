@@ -16,6 +16,7 @@ urlpatterns = [
     path('faq/', views.FAQAPIView.as_view()),
     path('terms/', views.TermsAPIView.as_view()),
     path('report/', views.ReportAPIView.as_view()),
+    path('letme-review/', views.LetMeReviewAPIView.as_view()),
 
     
 ]
