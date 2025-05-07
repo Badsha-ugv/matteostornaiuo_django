@@ -63,3 +63,20 @@ class TermsAndConditions(models.Model):
     class Meta:
         verbose_name_plural = 'Terms and Conditions'
         ordering = ['-created_at']
+
+
+class LetmeReview(models.Model):
+    reviewer = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='letme_review/',storage=CustomS3Storage(), blank=True, null=True)
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    review = models.TextField()
+    is_publish = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.reviewer
+
+    class Meta:
+        verbose_name_plural = 'Letme Reviews'
+        ordering = ['-created_at']
+    

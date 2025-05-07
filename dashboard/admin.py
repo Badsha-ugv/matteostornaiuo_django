@@ -1,9 +1,9 @@
 from django.contrib import admin
-
+from django.utils.html import format_html
 from unfold.admin import ModelAdmin
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 
-from .models import  Notification, Report, FAQ, TermsAndConditions
+from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview
 
 
 @admin.register(Notification)
@@ -30,3 +30,24 @@ class FAQAdmin(ModelAdmin):
 @admin.register(TermsAndConditions)
 class TermsAndConditionsAdmin(ModelAdmin):
     pass 
+
+@admin.register(LetmeReview)
+class LetmeReviewAdmin(ModelAdmin):
+    list_display = ('image_view','reviewer', 'designation', 'is_publish','review_view', 'created_at')
+    search_fields = ('reviewer', 'designation')
+    list_display_links = ('image_view','reviewer')
+
+    def image_view(self, obj):
+        return format_html(
+            '<img src="{}" width="100px" height="100px">',
+            obj.image.url if obj.image else None
+        )
+    image_view.short_description = 'Image'
+    image_view.allow_tags = True
+
+    # show  only 50 word from review
+    def review_view(self, obj):
+        return obj.review[:50] + '...' if obj.review else None
+    review_view.short_description = 'Review'
+    review_view.allow_tags = True
+    
