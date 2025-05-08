@@ -73,6 +73,11 @@ UNFOLD = {
                         "icon": "reviews",
                         "link": reverse_lazy("admin:dashboard_letmereview_changelist"),
                     },
+                    {
+                    "title": _("Company List"),
+                        "icon": "format_list_bulleted",
+                        "link": reverse_lazy("admin:dashboard_companylisted_changelist"),
+                    },
                 ],
             },
             {

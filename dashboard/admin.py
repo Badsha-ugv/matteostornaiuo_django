@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from unfold.admin import ModelAdmin
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 
-from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview
+from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview, CompanyListed
 
 
 @admin.register(Notification)
@@ -51,3 +51,13 @@ class LetmeReviewAdmin(ModelAdmin):
     review_view.short_description = 'Review'
     review_view.allow_tags = True
     
+
+@admin.register(CompanyListed)
+class CompanyListedAdmin(ModelAdmin):
+    list_display = ('company', 'order', 'is_show')
+    search_fields = ('company__company_name',)
+    list_filter_sheet = False
+    list_filter = (
+        ('company', admin.RelatedOnlyFieldListFilter),
+        ('is_show', admin.BooleanFieldListFilter),
+    )

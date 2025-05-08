@@ -14,7 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
 # Create your views here.
-from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview
+from .models import  Notification, Report, FAQ, TermsAndConditions, LetmeReview, CompanyListed
 from . serializers import (
     NotificationSerializer, 
     SkillSerializer,
@@ -513,5 +513,27 @@ class LetMeReviewAPIView(APIView):
             "success": True,
             "message": "List of LetmeReview",
             "data": serializers.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
+    
+class CompanyListedAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        companies = CompanyListed.objects.all()
+        data = []
+        for company in companies:
+            obj = {
+                'company_logo': company.company.company_logo.url if company.company.company_logo else None,
+                'order': company.order,
+            }
+            data.append(obj)
+
+
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of Companies",
+            "data": data
         }
         return Response(response, status=status.HTTP_200_OK)

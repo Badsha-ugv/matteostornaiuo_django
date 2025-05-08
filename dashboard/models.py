@@ -80,3 +80,16 @@ class LetmeReview(models.Model):
         verbose_name_plural = 'Letme Reviews'
         ordering = ['-created_at']
     
+
+class CompanyListed(models.Model):
+    company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
+    is_show = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.company.company_name
+
+    class Meta:
+        verbose_name_plural = 'Company Listed'
+        ordering = ['order']
