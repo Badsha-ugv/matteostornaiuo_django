@@ -122,12 +122,12 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -289,7 +289,13 @@ AWS_DEFAULT_ACL = None
 
 
 
-
+# inmemory cache backend
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
 
 
 # celety configuration

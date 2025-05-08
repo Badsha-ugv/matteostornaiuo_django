@@ -4,6 +4,7 @@ from datetime import datetime
 from django.db.models import Q , Count , Prefetch
 from django.utils.timesince import timesince
 from django.utils.timezone import now
+from django.core.cache import cache
 
 
 from rest_framework import status, generics 
@@ -118,9 +119,9 @@ class FeedJobView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
             user = request.user
-
+            # get from cache
+            
             vacancy = Vacancy.objects.filter(pk=pk).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').first()
-                
             if not vacancy:
                 response = {
                     "status": status.HTTP_200_OK,
@@ -469,7 +470,12 @@ class FAQAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        faqs = FAQ.objects.all()
+        # first get data from cache
+        faqs = cache.get('faqs')
+        if not faqs:
+            faqs = FAQ.objects.all()
+            cache.set('faqs', faqs, 60*60*24)
+            print('iam from db')
         data = []
         for faq in faqs:
             obj = {
@@ -537,3 +543,32 @@ class CompanyListedAPIView(APIView):
             "data": data
         }
         return Response(response, status=status.HTTP_200_OK)
+    
+
+
+class StatisticsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if not client:
+                return Response({"error": "Client profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+            # calculate total applicant 
+            total_applicant = JobApplication.objects.filter(vacancy__job__company=client).count()
+            # calculate total job
+            total_job = Job.objects.filter(company=client).count()
+
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Statistics",
+                "data": {
+                    "total_applicant": total_applicant,
+                    "total_job": total_job
+                }
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
