@@ -131,52 +131,72 @@ class FeedJobView(APIView):
                 }
                 return Response(response, status=status.HTTP_200_OK)
             
+            # def get_application_status(obj):
+            #     # return the count of each job status 
+            #     job_application = JobApplication.objects.filter(vacancy=obj)
+            #     pending = job_application.filter(job_status='pending').count()
+            #     accepted = job_application.filter(job_status='accepted').count()
+            #     rejected = job_application.filter(job_status='rejected').count()
+            #     expierd = job_application.filter(job_status='expired').count()
+            #     return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
             def get_application_status(obj):
-                # return the count of each job status 
-                job_application = JobApplication.objects.filter(vacancy=obj)
-                pending = job_application.filter(job_status='pending').count()
-                accepted = job_application.filter(job_status='accepted').count()
-                rejected = job_application.filter(job_status='rejected').count()
-                expierd = job_application.filter(job_status='expired').count()
-                return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+                # Aggregate job_status counts in a single query
+                status_counts = (
+                    JobApplication.objects
+                    .filter(vacancy=obj)
+                    .values('job_status')
+                    .annotate(count=Count('id'))
+                )
+
+                # Create a default dictionary
+                result = {'pending': 0, 'accepted': 0, 'rejected': 0, 'expired': 0}
+
+                # Fill the actual counts
+                for entry in status_counts:
+                    status = entry['job_status']
+                    count = entry['count']
+                    if status in result:
+                        result[status] = count
+
+                return result
                 
-            if vacancy.job.company.user == user:
+            # if vacancy.job.company.user == user:
                 # serializer = VacancySerializer(vacancy)
-                data = {
-                    
-                    "id": vacancy.id,
-                    "company_avatar": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
-                    "job_status": vacancy.job_status,
-                    "job_name": vacancy.job.title,
-                    "job_role": vacancy.job_title.name,
-                    "open_date": vacancy.open_date,
-                    "close_date": vacancy.close_date,
-                    "start_time": vacancy.start_time,
-                    "end_time": vacancy.end_time,
-                    "location": vacancy.location,
-                    # "salary": vacancy.salary,
-                    "number_of_staff": vacancy.number_of_staff,
-                    "participants": [
-                        {
-                            "staff_name": staff.user.first_name + " " + staff.user.last_name,
-                            "staff_id" : staff.id,
-                            "staff_profile": staff.avatar.url if staff.avatar else None,
-                            "age": staff.age,
-                            "gender": staff.gender,
-                            "timesince": f"{timesince(staff.created_at, now())} ago",
-                            "job_title": staff.role.name,
-                            "is_favourite": True if FavouriteStaff.objects.filter(company=vacancy.job.company, staff=staff).select_related('staff','company').exists() else False,
-                        }
-                        for staff in vacancy.participants.all()
-                    ],
-                    "application_status": get_application_status(vacancy)
-                }
-                response = {
-                    "status": status.HTTP_200_OK,
-                    "success": True,
-                    "data": data,
-                }
-                return Response(response, status=status.HTTP_200_OK)
+            data = {
+                
+                "id": vacancy.id,
+                "company_avatar": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
+                "job_status": vacancy.job_status,
+                "job_name": vacancy.job.title,
+                "job_role": vacancy.job_title.name,
+                "open_date": vacancy.open_date,
+                "close_date": vacancy.close_date,
+                "start_time": vacancy.start_time,
+                "end_time": vacancy.end_time,
+                "location": vacancy.location,
+                # "salary": vacancy.salary,
+                "number_of_staff": vacancy.number_of_staff,
+                "participants": [
+                    {
+                        "staff_name": staff.user.first_name + " " + staff.user.last_name,
+                        "staff_id" : staff.id,
+                        "staff_profile": staff.avatar.url if staff.avatar else None,
+                        "age": staff.age,
+                        "gender": staff.gender,
+                        "timesince": f"{timesince(staff.created_at, now())} ago",
+                        "job_title": staff.role.name,
+                        "is_favourite": True if FavouriteStaff.objects.filter(company=vacancy.job.company, staff=staff).select_related('staff','company').exists() else False,
+                    }
+                    for staff in vacancy.participants.all()
+                ],
+                "application_status": get_application_status(vacancy)
+            }
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "data": data,
+            }
+            return Response(response, status=status.HTTP_200_OK)
             
         
         user = request.user

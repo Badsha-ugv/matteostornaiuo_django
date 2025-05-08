@@ -2,8 +2,9 @@ from rest_framework import serializers,status
 from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from datetime import datetime, timedelta
+
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
@@ -101,12 +102,30 @@ class VacancySerializer(serializers.ModelSerializer):
         return obj.job.title
     def get_application_status(self, obj):
         # return the count of each job status 
-        job_application = JobApplication.objects.filter(vacancy=obj)
-        pending = job_application.filter(job_status='pending').count()
-        accepted = job_application.filter(job_status='accepted').count()
-        rejected = job_application.filter(job_status='rejected').count()
-        expierd = job_application.filter(job_status='expired').count()
-        return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+        # job_application = JobApplication.objects.filter(vacancy=obj)
+        # pending = job_application.filter(job_status='pending').count()
+        # accepted = job_application.filter(job_status='accepted').count()
+        # rejected = job_application.filter(job_status='rejected').count()
+        # expierd = job_application.filter(job_status='expired').count()
+        # return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+        status_counts = (
+                    JobApplication.objects
+                    .filter(vacancy=obj)
+                    .values('job_status')
+                    .annotate(count=Count('id'))
+                )
+
+        # Create a default dictionary
+        result = {'pending': 0, 'accepted': 0, 'rejected': 0, 'expired': 0}
+
+        # Fill the actual counts
+        for entry in status_counts:
+            status = entry['job_status']
+            count = entry['count']
+            if status in result:
+                result[status] = count
+
+        return result
         
 
 

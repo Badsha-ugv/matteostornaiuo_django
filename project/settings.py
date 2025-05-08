@@ -52,6 +52,9 @@ INSTALLED_APPS = [
     "shifting",
     "subscription",
     # 3rd party 
+    'debug_toolbar',
+
+    #local
     "import_export",
     "drf_spectacular",
     "corsheaders",
@@ -77,6 +80,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
     "querycount.middleware.QueryCountMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 
@@ -117,7 +121,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project.wsgi.application"
 
-
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
