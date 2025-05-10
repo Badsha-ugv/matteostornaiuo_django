@@ -146,7 +146,7 @@ class CreateVacancySerializers(serializers.ModelSerializer):
         skills = validated_data.pop('skills',[])
         invited_staff_id = validated_data.pop('invited_staff',[])
         
-        print('validated data', validated_data['job'].status)
+        # print('validated data', validated_data['job'].status)
         vacancy = Vacancy.objects.create(
             **validated_data
         )
@@ -182,7 +182,7 @@ class JobSerializer(serializers.ModelSerializer):
         vacancy_data = validated_data.pop('vacancy_data',[])
         save_in_template = validated_data.get('save_template')
 
-        print('vacancy_data', vacancy_data)
+        # print('vacancy_data', vacancy_data)
         # user must be is client
         if not user.is_client:
             return serializers.ValidationError("Only clients can update jobs.")
@@ -208,13 +208,13 @@ class JobSerializer(serializers.ModelSerializer):
                     vacancy_copy['close_date'] = current_date
                     vacancy_copy['job'] = job.id
                     vacancy_copy['job_status'] =  'draft' if job.status == False else 'active'
-                    print('vacancy copy', vacancy_copy)
+                    # print('vacancy copy', vacancy_copy)
                     vacancy_serializer = CreateVacancySerializers(data=vacancy_copy)
                     if vacancy_serializer.is_valid():
                         vacancy_serializer.save()
                     else:
                         return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    print('current', current_date)
+                    # print('current', current_date)
                     current_date = current_date + timedelta(days=1)
 
             else:

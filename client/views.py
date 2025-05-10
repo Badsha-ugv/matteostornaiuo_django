@@ -237,10 +237,13 @@ class JobView(APIView):
         serializer = JobSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            # check serializer.data status value
+            # if status is False then return error
             response = {
                 "status": status.HTTP_200_OK,
                 "success": True,
-                "message": "Job created successfully",
+                "message": "Job Created successfully" if serializer.data['status'] else "Job Saved in Draft Successfully",
+                "job_id": serializer.data['id'],
                 # "data": serializer.data
             }
             return Response(response, status=status.HTTP_201_CREATED)
