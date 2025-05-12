@@ -25,7 +25,8 @@ from .models import (
     JobAds,
     MyStaff, FavouriteStaff,
     JobReport,
-    CompanyReview
+    CompanyReview,
+    InviteMystaff
 
 
 
@@ -291,3 +292,8 @@ class CompanyReviewAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """Disable the delete button."""
         return True
+    
+
+@admin.register(InviteMystaff)
+class InviteMystaffAdmin(ModelAdmin):
+    pass 

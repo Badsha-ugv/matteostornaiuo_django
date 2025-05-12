@@ -23,5 +23,6 @@ app.conf.beat_schedule = {
         # 'schedule': crontab(hour=14, minute=54),
         'schedule': crontab(hour=17,minute=42),  
     },
+    
 
 }

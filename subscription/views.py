@@ -1,5 +1,6 @@
 import stripe 
 from datetime import datetime
+import json 
 
 from django.shortcuts import render
 from django.conf import settings
@@ -23,7 +24,9 @@ from.serializers import (
     
 )
 
-from client.models import CompanyProfile
+from client.models import CompanyProfile, InviteMystaff
+from utility.utils import send_staff_invitation
+from .tasks import send_staff_joining_mail_task
 
 # Initialize your Stripe API
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -33,7 +36,13 @@ class PackageView(APIView):
     def get(self, request):
         packages = Packages.objects.all()
         serializer = PackagesSerializer(packages, many=True)
-        return Response(serializer.data)
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of packages",
+            "data": serializer.data
+        }
+        return Response(response)
     
 # @csrf_exempt
 # @api_view(['POST'])
@@ -352,6 +361,7 @@ def webhook(request):
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+    
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
         print('Webhook event type:', event.type)
@@ -359,78 +369,109 @@ def webhook(request):
         print('Error deserializing webhook:', e)
         return HttpResponse(status=400)
     
-    # When the Payment Intent is confirmed, Stripe fires an invoice.payment_succeeded event.
-    if event.type == 'invoice.payment_succeeded':
-        data = event['data']['object']
-        stripe_subscription_id = data.get('subscription')
-        if stripe_subscription_id:
-            try:
-                subscription_obj = Subscription.objects.get(stripe_subscriptoin_id=stripe_subscription_id)
-                # Mark the subscription as active now that payment is confirmed.
-                subscription_obj.status = 'active'
-                subscription_obj.save()
-            except Subscription.DoesNotExist:
-                pass
-        return HttpResponse(status=200)
-
-    # You may still want to listen for subscription lifecycle events:
     if event.type == 'customer.subscription.created':
         print('Customer subscription created')
         data = event['data']['object']
         metadata = data.get('metadata', {})
+        print('metadata', metadata)
         user_id = metadata.get('user_id')
         package_id = metadata.get('package_id')
+        obj = json.loads(event['data']['object']['metadata']['staff'])
+        print('obj', obj)
         stripe_subscription_id = data['id']
-        print('Subscription metadata:', user_id, package_id, stripe_subscription_id)
+
+
         try:
             user = User.objects.get(id=user_id)
+            client = CompanyProfile.objects.get(user=user)
             package = Packages.objects.get(id=package_id)
             Subscription.objects.create(
                 user=user,
                 package=package,
                 stripe_subscriptoin_id=stripe_subscription_id,
                 end_date=datetime.fromtimestamp(data['current_period_end']),
-                status='pending',  # Will be updated to active after payment succeeds
+                status='active',  # Will be updated to active after payment succeeds
             )
+
+            # send staff joining mail
+            send_staff_joining_mail_task.delay(obj, client.id)
+            # bulk create staff invitations
+            # for staff in obj:
+            #     InviteMystaff.objects.create(
+            #         client=client,
+            #         staff_name=staff['staff_name'],
+            #         staff_email=staff['staff_email'],
+            #         phone=staff['phone'],
+            #         job_role=staff['job_role'],
+            #         employee_type=staff['employee_type']
+            #     )
+            #     # send invitation email to staff
+            #     send_staff_invitation(staff['staff_name'], staff['staff_email'], client.company_name)
         except Exception as e:
             print("Error creating local subscription:", e)
         return HttpResponse(status=200)
 
     elif event.type == 'customer.subscription.updated':
-        print('Customer subscription updated')
         data = event['data']['object']
         metadata = data.get('metadata', {})
+        print('metadata', metadata)
         user_id = metadata.get('user_id')
+        print('user id', user_id)
         package_id = metadata.get('package_id')
+        print('package id', package_id)
         stripe_subscription_id = data['id']
+        staff_lists = json.loads(event['data']['object']['metadata']['staff'])
+        print('staff_lists', staff_lists)
         try:
             user = User.objects.get(id=user_id)
+            client = CompanyProfile.objects.get(user=user)
             package = Packages.objects.get(id=package_id)
             subscription = Subscription.objects.filter(user=user, package=package, stripe_subscriptoin_id=stripe_subscription_id).first()
             if subscription:
-                subscription.end_date = datetime.fromtimestamp(data['current_period_end'])
-                # Optionally update status based on the event details.
+                # subscription.end_date = datetime.fromtimestamp(data['current_period_end'])
+                subscription.status = 'active'
                 subscription.save()
+                # send staff joining mail
+                send_staff_joining_mail_task.delay(staff_lists, client.id)
         except Exception as e:
             print("Error updating subscription:", e)
+            return HttpResponse(status=200)
         return HttpResponse(status=200)
+    
+    #     print('Customer subscription updated')
+    #     data = event['data']['object']
+    #     metadata = data.get('metadata', {})
+    #     user_id = metadata.get('user_id')
+    #     package_id = metadata.get('package_id')
+    #     stripe_subscription_id = data['id']
+    #     try:
+    #         user = User.objects.get(id=user_id)
+    #         package = Packages.objects.get(id=package_id)
+    #         subscription = Subscription.objects.filter(user=user, package=package, stripe_subscriptoin_id=stripe_subscription_id).first()
+    #         if subscription:
+    #             subscription.end_date = datetime.fromtimestamp(data['current_period_end'])
+    #             # Optionally update status based on the event details.
+    #             subscription.save()
+    #     except Exception as e:
+    #         print("Error updating subscription:", e)
+    #     return HttpResponse(status=200)
 
-    elif event.type == 'customer.subscription.deleted':
-        print('Customer subscription deleted')
-        data = event['data']['object']
-        metadata = data.get('metadata', {})
-        user_id = metadata.get('user_id')
-        package_id = metadata.get('package_id')
-        stripe_subscription_id = data['id']
-        try:
-            user = User.objects.get(id=user_id)
-            package = Packages.objects.get(id=package_id)
-            subscription = Subscription.objects.filter(user=user, package=package, stripe_subscriptoin_id=stripe_subscription_id).first()
-            if subscription:
-                subscription.status = 'cancelled'
-                subscription.save()
-        except Exception as e:
-            print("Error cancelling subscription:", e)
-        return HttpResponse(status=200)
+    # elif event.type == 'customer.subscription.deleted':
+    #     print('Customer subscription deleted')
+    #     data = event['data']['object']
+    #     metadata = data.get('metadata', {})
+    #     user_id = metadata.get('user_id')
+    #     package_id = metadata.get('package_id')
+    #     stripe_subscription_id = data['id']
+    #     try:
+    #         user = User.objects.get(id=user_id)
+    #         package = Packages.objects.get(id=package_id)
+    #         subscription = Subscription.objects.filter(user=user, package=package, stripe_subscriptoin_id=stripe_subscription_id).first()
+    #         if subscription:
+    #             subscription.status = 'cancelled'
+    #             subscription.save()
+    #     except Exception as e:
+    #         print("Error cancelling subscription:", e)
+    #     return HttpResponse(status=200)
     
     return HttpResponse(status=403)

@@ -182,8 +182,6 @@ class JobSerializer(serializers.ModelSerializer):
         vacancy_data = validated_data.pop('vacancy_data',[])
         save_in_template = validated_data.get('save_template')
 
-        # print('vacancy_data', vacancy_data)
-        # user must be is client
         if not user.is_client:
             return serializers.ValidationError("Only clients can update jobs.")
         client = CompanyProfile.objects.filter(user=user).first()

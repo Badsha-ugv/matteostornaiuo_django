@@ -64,6 +64,9 @@ urlpatterns = [
 
 
 
+    # invitation
+    path('company/staff/invited/', views.MyStaffInvitatinView.as_view()),
+    path('company/staff/invited/<int:package_id>/', views.MyStaffInvitatinView.as_view()),
 
 
 

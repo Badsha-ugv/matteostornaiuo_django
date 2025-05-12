@@ -17,9 +17,6 @@ def code_genator():
     return code
 
 
-# output: 06ac13
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -102,8 +99,6 @@ class ClientSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
 
-
- 
     def create(self, validated_data):
 
         try:

@@ -178,6 +178,7 @@ class JobApplication(models.Model):
 
 
 class StaffInvitation(models.Model):
+    """INVITE STAFF TO JOIN THE JOB"""
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
@@ -390,3 +391,27 @@ class CompanyReview(models.Model):
     class Meta:
         verbose_name_plural = 'Company Reviews'
         ordering = ['-created_at']
+
+
+class InviteMystaff(models.Model):
+    """INVITE USER TO JOIN THE COMPANY"""
+    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+    staff_name = models.CharField(max_length=200)
+    staff_email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    job_role = models.CharField(max_length=200)
+    employee_type = models.CharField(max_length=200)
+    invitation_code = models.CharField(max_length=8, null=True)
+    code_expiry = models.DateTimeField(blank=True, null=True)
+    is_joined = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.staff_name} - {self.staff_email}"
+    
+    class Meta:
+        verbose_name_plural = 'Invite Staff'
+        ordering = ['-created_at']
+        unique_together = ('staff_email', 'client')
+    

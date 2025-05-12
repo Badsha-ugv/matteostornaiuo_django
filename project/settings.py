@@ -1,14 +1,17 @@
-from django.templatetags.static import static
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from pathlib import Path
 import os
-from datetime import timedelta
+from pathlib import Path
 import dj_database_url
+
+from dotenv import load_dotenv
+from datetime import timedelta
+from import_export.formats.base_formats import CSV, XLSX
+
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from dotenv import load_dotenv
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 
 from .unfold import UNFOLD
@@ -27,32 +30,25 @@ ALLOWED_HOSTS = ['admin.letme.no', '*']
 
 
 INSTALLED_APPS = [
-    "unfold",  # before django.contrib.admin
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
-    "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history", # optional, if django-simple-history package is used
+    "unfold",  
+    "unfold.contrib.filters", 
+    "unfold.contrib.forms", 
+    "unfold.contrib.inlines",  
+    "unfold.contrib.import_export",  
+    "unfold.contrib.guardian", 
+    "unfold.contrib.simple_history",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
+    # 3rd party 
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework_simplejwt",
     "storages",
-    "users",
-    "client",
-    "staff",
-    "dashboard",
-    "chat",
-    "shifting",
-    "subscription",
-    # 3rd party 
-    'debug_toolbar',
 
     #local
     "import_export",
@@ -61,10 +57,15 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     "homedashbord",
     "celeryapi",
+    "users",
+    "client",
+    "staff",
+    "dashboard",
+    "chat",
+    "shifting",
+    "subscription",
 
 
-    
-    
 
 ]
 
@@ -79,8 +80,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
+    # custom middleware
     "querycount.middleware.QueryCountMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+
 ]
 
 
@@ -121,13 +123,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project.wsgi.application"
 
-INTERNAL_IPS = [
-    # ...
-    "127.0.0.1",
-    # ...
-]
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
 
 
 # DATABASES = {
@@ -135,12 +131,6 @@ INTERNAL_IPS = [
 #         "ENGINE": "django.db.backends.sqlite3",
 #         "NAME": BASE_DIR / "db.sqlite3",
 #     }
-# }
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-#     )
 # }
 
 
@@ -155,12 +145,6 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-#     )
-# }
-
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0' 
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
@@ -174,8 +158,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -193,8 +175,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
 
@@ -205,8 +185,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
 
 STATIC_URL = "/static/"
 STATICFILE_DIRS = [os.path.join(BASE_DIR, 'static')]
@@ -236,7 +215,6 @@ CSRF_TRUSTED_ORIGINS = [
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-from import_export.formats.base_formats import CSV, XLSX
 # multiple import options
 IMPORT_FORMATS = [CSV, XLSX]
 # Default primary key field type
@@ -267,11 +245,11 @@ EMAIL_PORT = 465
 EMAIL_USE_SSL = True
 
 
-# Stripe settings
+# Stripe settings (Badsha)
 STRIPE_PUBLIC_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
 STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
-# STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
-STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
+STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
+# STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
@@ -291,7 +269,7 @@ AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazo
 
 # Configure Django-Storages
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = 'public-r0ead'
 AWS_DEFAULT_ACL = None
 
 
@@ -311,6 +289,3 @@ CACHES = {
 # CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 # CELERY_ACCEPT_CONTENT = ['application/json']
 # CELERY_TASK_SERIALIZER = 'json'
-
-
-
