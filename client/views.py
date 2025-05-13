@@ -1263,7 +1263,7 @@ class MyStaffInvitatinView(APIView):
         user = request.user
         staff_data = request.data.get('staff',[])
 
-        if len(staff_data) == 0:
+        if len(staff_data) == 0 or staff_data == None:
             return Response({"error": "Staff data not found"}, status=status.HTTP_400_BAD_REQUEST)
         
 

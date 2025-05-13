@@ -251,8 +251,8 @@ STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk
 # STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
 STRIPE_WEBHOOK_SECRET = "whsec_zl0AWrt8NfVlknmJ2mTEBVYRY0HZtBz4"
 
-STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
-STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
+STRIPE_SUCCESS_URL = "http://localhost:5173/success"
+STRIPE_CANCEL_URL = "http://localhost:5173/cancel"
 
 
 
