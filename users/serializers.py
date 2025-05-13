@@ -7,7 +7,7 @@ import uuid
 from .email_service import send_staff_invitation_email_from_client
 from django.utils.timezone import now, timedelta
 from django.core.exceptions import ValidationError
-from client.models import MyStaff, CompanyProfile
+from client.models import MyStaff, CompanyProfile, InviteMystaff
 
 
 def code_genator():
@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StaffSignupSerializer(serializers.ModelSerializer):
-    client_invitation_code = serializers.CharField(max_length=6, write_only=True)
+    client_invitation_code = serializers.CharField(max_length=100, write_only=True)
 
     class Meta:
         model = User
@@ -55,7 +55,7 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         except ValidationError as e:
             raise serializers.ValidationError({"password": e.messages})  # Return errors properly
 
-        invitations_obj = Invitation.objects.filter(staff_email=validated_data["email"]).first()
+        # invitations_obj = Invitation.objects.filter(staff_email=validated_data["email"]).first()
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
             user = User.objects.create(
@@ -68,11 +68,13 @@ class StaffSignupSerializer(serializers.ModelSerializer):
                 is_staff=True,
             )
         # add invited users to my staff list 
-        
+        invitations_obj = InviteMystaff.objects.filter(staff_email=validated_data["email"]).first()
+
         if invitations_obj:
             # if not invitations_obj.invitation_code == validated_data['invitation_code'] 
-            invitations_obj.invitation_code = None
+            invitations_obj.is_joined = True
             invitations_obj.save()
+            
 
         #     invited_by = invitations_obj.staff_invitation.user
         #     client = CompanyProfile.objects.get(user=invited_by)

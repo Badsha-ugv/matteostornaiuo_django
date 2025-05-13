@@ -13,11 +13,6 @@ from staff.models import (
 User = get_user_model()
 
 
-    
-    # send notification to staff 
-    
-    
-
 
 class Shifting(models.Model):
     company =  models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
@@ -32,10 +27,10 @@ class Shifting(models.Model):
         ordering = ['-created_at']
         unique_together = (('company','shift_for'),)
         
-    @property
-    def set_my_shift(self):
-        me = self.shift_for.staff
-        self.shift.add(me)
+    # @property
+    # def set_my_shift(self):
+    #     me = self.shift_for.staff
+    #     self.shift.add(me)
 
 SHIFT_STATUS = (
     ('pending', 'Pending'),

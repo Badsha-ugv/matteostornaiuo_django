@@ -1261,7 +1261,12 @@ class MyStaffInvitatinView(APIView):
     
     def post(self, request, package_id, *args, **kwargs):
         user = request.user
-        staff_data = request.data
+        staff_data = request.data.get('staff',[])
+
+        if len(staff_data) == 0:
+            return Response({"error": "Staff data not found"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
 
         if user.is_client:
             client = get_object_or_404(CompanyProfile, user=user)
