@@ -78,6 +78,17 @@ UNFOLD = {
                         "icon": "format_list_bulleted",
                         "link": reverse_lazy("admin:dashboard_companylisted_changelist"),
                     },
+                    {
+                    "title": _("Subscription Package"),
+                        "icon": "package_2",
+                        "link": reverse_lazy("admin:subscription_packages_changelist"),
+                    },
+                    {
+                        "title": _("Subscription"),
+                        "icon": "subscriptions",
+                        "link": reverse_lazy("admin:subscription_subscription_changelist"),
+
+                    }
                 ],
             },
             {

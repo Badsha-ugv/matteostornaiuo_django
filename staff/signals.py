@@ -15,7 +15,7 @@ def add_staff_to_mystaff(sender, instance, created, **kwargs):
             instance.save()
             # user = CompanyProfile.objects.filter(user=invited_by).first()
             try:
-                client = CompanyProfile.objects.get(user=invitation.client)
+                client = CompanyProfile.objects.get(user=invitation.client.user)
                 MyStaff.objects.create(staff=instance, client=client, status=True)
             except CompanyProfile.DoesNotExist:
                 pass
