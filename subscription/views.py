@@ -25,7 +25,6 @@ from.serializers import (
 )
 
 from client.models import CompanyProfile, InviteMystaff
-from utility.utils import send_staff_invitation
 from .tasks import send_staff_joining_mail_task
 
 # Initialize your Stripe API
@@ -64,7 +63,8 @@ def webhook(request):
         metadata = data.get('metadata', {})
         user_id = metadata.get('user_id')
         package_id = metadata.get('package_id')
-        obj = json.loads(event['data']['object']['metadata']['staff'])
+        staff_count = int(metadata.get('staff_count'))
+        # obj = json.loads(event['data']['object']['metadata']['staff'])
         stripe_subscription_id = data['id']
 
 
@@ -81,7 +81,7 @@ def webhook(request):
             )
 
             # send staff joining mail
-            send_staff_joining_mail_task.delay(obj, client.id)
+            send_staff_joining_mail_task.delay(staff_count, client.id)
             # bulk create staff invitations
             # for staff in obj:
             #     InviteMystaff.objects.create(
@@ -101,14 +101,11 @@ def webhook(request):
     elif event.type == 'customer.subscription.updated':
         data = event['data']['object']
         metadata = data.get('metadata', {})
-        print('metadata', metadata)
         user_id = metadata.get('user_id')
-        print('user id', user_id)
         package_id = metadata.get('package_id')
-        print('package id', package_id)
+        staff_count = int(metadata.get('staff_count'))
         stripe_subscription_id = data['id']
-        staff_lists = json.loads(event['data']['object']['metadata']['staff'])
-        print('staff_lists', staff_lists)
+        # staff_lists = json.loads(event['data']['object']['metadata']['staff'])
         try:
             user = User.objects.get(id=user_id)
             client = CompanyProfile.objects.get(user=user)
@@ -119,7 +116,7 @@ def webhook(request):
                 subscription.status = 'active'
                 subscription.save()
                 # send staff joining mail
-                send_staff_joining_mail_task.delay(staff_lists, client.id)
+                send_staff_joining_mail_task.delay(staff_count, client.id)
         except Exception as e:
             print("Error updating subscription:", e)
             return HttpResponse(status=200)

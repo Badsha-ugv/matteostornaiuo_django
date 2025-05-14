@@ -402,6 +402,7 @@ class InviteMystaff(models.Model):
     employee_type = models.CharField(max_length=200)
     invitation_code = models.CharField(max_length=8, null=True)
     code_expiry = models.DateTimeField(blank=True, null=True)
+    status  = models.CharField(max_length=10, default='pending')
     is_joined = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)

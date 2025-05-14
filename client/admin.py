@@ -296,4 +296,4 @@ class CompanyReviewAdmin(ModelAdmin):
 
 @admin.register(InviteMystaff)
 class InviteMystaffAdmin(ModelAdmin):
-    pass 
+    list_display = ('client', 'staff_name', 'staff_email', 'status', 'is_joined') 

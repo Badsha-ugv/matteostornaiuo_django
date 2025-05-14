@@ -64,6 +64,7 @@ from shifting.models import DailyShift, Shifting
 from shifting.serializers import DailyShiftSerializer
 from subscription.models import Packages, Subscription
 from subscription.tasks import send_staff_joining_mail_task
+from utility.utils import generate_random_invitation_code, save_invited_staff
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 # create company profile
@@ -1263,6 +1264,8 @@ class MyStaffInvitatinView(APIView):
         user = request.user
         staff_data = request.data.get('staff',[])
 
+        print('staff data', staff_data)
+
         if len(staff_data) == 0 or staff_data == None:
             return Response({"error": "Staff data not found"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -1307,6 +1310,7 @@ class MyStaffInvitatinView(APIView):
             current_subscription = None
             stripe_subscription = None
         
+        
         if stripe_subscription:
             print('stripe subscription exists', stripe_subscription.id)
             if current_subscription.status == 'active' and current_subscription.package.id == package_id:
@@ -1314,11 +1318,14 @@ class MyStaffInvitatinView(APIView):
                 rem_staff = package.number_of_staff - my_staff
                 if rem_staff > 0:
                     # send staff joining mail
-                    send_staff_joining_mail_task.delay(staff_data, client.id)
+                    save_invited_staff(staff_data, client)
+                    send_staff_joining_mail_task.delay(len(staff_data), client.id)
                     return Response({"message": "Your are already subscribed this packages\n Staff invitation mail will sent successfully!"}, status=status.HTTP_200_OK)
                 else:
                     # return error response
                     return Response({"error": "You have reached the maximum number of staff allowed in this package"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            
             try:
                 update_subscription = stripe.Subscription.modify(
                     stripe_subscription.id,
@@ -1330,7 +1337,8 @@ class MyStaffInvitatinView(APIView):
                     metadata={
                         'package_id': str(package_id), 
                         'user_id': str(user.id),
-                        'staff': json.dumps(staff_data)
+                        # 'staff': json.dumps(staff_data)
+                        'staff_count': len(staff_data)
                     },
                     
                     )
@@ -1344,6 +1352,10 @@ class MyStaffInvitatinView(APIView):
                     end_date=datetime.fromtimestamp(update_subscription['current_period_end']),
                     status='pending',
                 )
+
+                save_invited_staff(staff_data, client)
+
+                
 
             except stripe.error.StripeError as e:
                 # Handle any Stripe API errors
@@ -1363,6 +1375,9 @@ class MyStaffInvitatinView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         
         else:
+
+            save_invited_staff(staff_data, client)
+            
             checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             mode='subscription',
@@ -1373,13 +1388,15 @@ class MyStaffInvitatinView(APIView):
             metadata={
                 'package_id': str(package_id), 
                 'user_id': str(user.id),
-                'staff': json.dumps(staff_data)
+                # 'staff': json.dumps(staff_data),
+                'staff_count': len(staff_data)
                 },
             subscription_data={
                 'metadata': {
                     'user_id':str(user.id),
                     'package_id': str(package_id),
-                    'staff': json.dumps(staff_data)
+                    # 'staff': json.dumps(staff_data)
+                    'staff_count': len(staff_data)
                 }
             },
             )
