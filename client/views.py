@@ -1304,7 +1304,7 @@ class MyStaffInvitatinView(APIView):
         
         # fetch current subscription
         try:
-            current_subscription = Subscription.objects.get(user=user, status='active')
+            current_subscription = Subscription.objects.filter(user=user, status='active').first()
             stripe_subscription = stripe.Subscription.retrieve(current_subscription.stripe_subscriptoin_id)
         except Subscription.DoesNotExist:
             current_subscription = None
