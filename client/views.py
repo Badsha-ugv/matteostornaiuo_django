@@ -1264,14 +1264,10 @@ class MyStaffInvitatinView(APIView):
         user = request.user
         staff_data = request.data.get('staff',[])
 
-        print('staff data', staff_data)
-
         if len(staff_data) == 0 or staff_data == None:
             return Response({"error": "Staff data not found"}, status=status.HTTP_400_BAD_REQUEST)
         
-
-
-        if user.is_client:
+        if user and user.is_client:
             client = get_object_or_404(CompanyProfile, user=user)
         else:
             return Response({"error": "Only client can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
@@ -1298,17 +1294,21 @@ class MyStaffInvitatinView(APIView):
                     name=f"{user.first_name} {user.last_name}"
                 )
         except stripe.error.StripeError as e:
-            # Handle any Stripe API errors
-            print(f"Stripe error: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # fetch current subscription
-        try:
-            current_subscription = Subscription.objects.filter(user=user, status='active').first()
+        current_subscription = Subscription.objects.filter(user=user, status='active').first()
+        if current_subscription:
             stripe_subscription = stripe.Subscription.retrieve(current_subscription.stripe_subscriptoin_id)
-        except Subscription.DoesNotExist:
-            current_subscription = None
+        else:
             stripe_subscription = None
+            current_subscription = None
+
+        # try:
+        #     stripe_subscription = stripe.Subscription.retrieve(current_subscription.stripe_subscriptoin_id)
+        # except Subscription.DoesNotExist:
+        #     current_subscription = None
+        #     stripe_subscription = None
         
         
         if stripe_subscription:
@@ -1316,17 +1316,18 @@ class MyStaffInvitatinView(APIView):
             if current_subscription.status == 'active' and current_subscription.package.id == package_id:
                 my_staff= MyStaff.objects.filter(client=client, status=True).count()
                 rem_staff = package.number_of_staff - my_staff
-                if rem_staff > 0:
+                if rem_staff > 0 and rem_staff == len(staff_data):
                     # send staff joining mail
                     save_invited_staff(staff_data, client)
                     send_staff_joining_mail_task.delay(len(staff_data), client.id)
                     return Response({"message": "Your are already subscribed this packages\n Staff invitation mail will sent successfully!"}, status=status.HTTP_200_OK)
                 else:
                     # return error response
-                    return Response({"error": "You have reached the maximum number of staff allowed in this package"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({f"error": "You have reached the maximum number of staff allowed in this package. you have{rem_staff} left to join"}, status=status.HTTP_400_BAD_REQUEST)
             
             
             try:
+                # existing_subs = stripe.Subscription.list(customer=user.stripe_customer_id, status='active')
                 update_subscription = stripe.Subscription.modify(
                     stripe_subscription.id,
                     items=[{
@@ -1341,7 +1342,7 @@ class MyStaffInvitatinView(APIView):
                         'staff_count': len(staff_data)
                     },
                     
-                    )
+                )
                 current_subscription.status = 'canceled'
                 current_subscription.save()
 
@@ -1354,8 +1355,6 @@ class MyStaffInvitatinView(APIView):
                 )
 
                 save_invited_staff(staff_data, client)
-
-                
 
             except stripe.error.StripeError as e:
                 # Handle any Stripe API errors
@@ -1375,7 +1374,11 @@ class MyStaffInvitatinView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         
         else:
-
+            # check the existing mail
+            # invitation_list = InviteMystaff.objects.filter(client=client)
+            # for invitation in invitation_list:
+            #     if invitation.staff_email in staff_data:
+            #         staff_data.remove(invitation.staff_email)
             save_invited_staff(staff_data, client)
             
             checkout_session = stripe.checkout.Session.create(

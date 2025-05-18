@@ -72,6 +72,12 @@ def webhook(request):
             user = User.objects.get(id=user_id)
             client = CompanyProfile.objects.get(user=user)
             package = Packages.objects.get(id=package_id)
+            existing_subs = Subscription.objects.filter(user=user, status='active')
+            if existing_subs:
+                for subscription in existing_subs:
+                    subscription.status = 'canceled'
+                    subscription.save()
+                    
             Subscription.objects.create(
                 user=user,
                 package=package,
