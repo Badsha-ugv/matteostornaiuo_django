@@ -22,6 +22,10 @@ db.sqlite3-journal
 # C extensions
 *.so
 
+
+.vscode/
+.idea/
+
 # Distribution / packaging
 .Python
 build/

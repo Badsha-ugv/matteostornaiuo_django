@@ -46,7 +46,6 @@ class PackageView(APIView):
 # --------------------- WEBHOOK HANDLER ---------------------
 @csrf_exempt
 def webhook(request):
-    print('Webhook called')
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
@@ -72,19 +71,19 @@ def webhook(request):
             user = User.objects.get(id=user_id)
             client = CompanyProfile.objects.get(user=user)
             package = Packages.objects.get(id=package_id)
-            existing_subs = Subscription.objects.filter(user=user, status='active')
-            if existing_subs:
-                for subscription in existing_subs:
-                    subscription.status = 'canceled'
-                    subscription.save()
-                    
-            Subscription.objects.create(
-                user=user,
-                package=package,
-                stripe_subscriptoin_id=stripe_subscription_id,
-                end_date=datetime.fromtimestamp(data['current_period_end']),
-                status='active',  # Will be updated to active after payment succeeds
-            )
+            subscription = Subscription.objects.filter(user=user, package=package, stripe_subscriptoin_id=stripe_subscription_id).first()
+            if subscription:
+                subscription.end_date = datetime.fromtimestamp(data['current_period_end'])
+                subscription.status = 'active'
+                subscription.save()
+            else:    
+                Subscription.objects.create(
+                    user=user,
+                    package=package,
+                    stripe_subscriptoin_id=stripe_subscription_id,
+                    end_date=datetime.fromtimestamp(data['current_period_end']),
+                    status='active',  # Will be updated to active after payment succeeds
+                )
 
             # send staff joining mail
             send_staff_joining_mail_task.delay(staff_count, client.id)
