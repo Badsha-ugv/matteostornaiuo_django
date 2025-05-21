@@ -403,6 +403,7 @@ class InviteMystaff(models.Model):
     invitation_code = models.CharField(max_length=8, null=True)
     code_expiry = models.DateTimeField(blank=True, null=True)
     status  = models.CharField(max_length=10, default='pending')
+    is_paid = models.BooleanField(default=False)
     is_joined = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)

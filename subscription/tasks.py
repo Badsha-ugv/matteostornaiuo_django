@@ -24,6 +24,7 @@ def send_staff_joining_mail_task(staff_count, clinet_id):
     for staff in staff_lists:
         try:
             staff.status = 'active'
+            staff.is_paid = True
             staff.save()
             # send invitation email to staff
             

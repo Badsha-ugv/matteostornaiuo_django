@@ -22,16 +22,16 @@ class Conversation(models.Model):
         ordering = ['-timestamp']
     
     # format time as 20 minutes ago
-    @property
-    def time_since(self):
-        now = timezone.now()
-        diff = now - self.timestamp
-        if diff.days > 0:
-            return f'{diff.days} days ago'
-        elif diff.seconds // 3600 > 0:
-            return f'{diff.seconds // 3600} hours ago'
-        elif diff.seconds // 60 > 0:
-            return f'{diff.seconds // 60} minutes ago'
-        else:
-            return 'just now'
+    # @property
+    # def time_since(self):
+    #     now = timezone.now()
+    #     diff = now - self.timestamp
+    #     if diff.days > 0:
+    #         return f'{diff.days} days ago'
+    #     elif diff.seconds // 3600 > 0:
+    #         return f'{diff.seconds // 3600} hours ago'
+    #     elif diff.seconds // 60 > 0:
+    #         return f'{diff.seconds // 60} minutes ago'
+    #     else:
+    #         return 'just now'
 

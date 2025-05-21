@@ -6,4 +6,4 @@ from .models import Conversation
 
 @admin.register(Conversation)
 class ConversationAdmin(ModelAdmin):
-    list_display = ('sender', 'receiver', 'timestamp','time_since')
+    list_display = ('sender', 'receiver', 'timestamp')
