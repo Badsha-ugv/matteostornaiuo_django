@@ -57,6 +57,7 @@ PyJWT==2.10.1
 pyphen==0.17.2
 python-crontab==3.2.0
 python-dateutil==2.9.0.post0
+python-decouple==3.8
 python-dotenv==1.1.0
 pytz==2025.1
 PyYAML==6.0.2

@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 
 from django.db.models import Avg, Count
@@ -15,22 +17,33 @@ from users.serializers import UserSerializer, SkillSerializer, JobRoleSerializer
 class CreateStaffSerializer(serializers.ModelSerializer):
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
     experience = serializers.PrimaryKeyRelatedField(queryset=Experience.objects.all(), many=True)
-    user_data = serializers.JSONField(write_only=True, required=False, allow_null=True)
+    # user_data = serializers.JSONField(write_only=True, required=False, allow_null=True)
     bank_details = serializers.JSONField(write_only=True, required=False, allow_null=True)
     # experience = serializers.PrimaryKeyRelatedField(queryset=Experience.objects.all(), many=True)
 
+    avatar = serializers.ImageField(required=False, allow_null=True)
+    cv = serializers.FileField(required=False, allow_null=True)
+    video_cv = serializers.FileField(required=False, allow_null=True)
+
     class Meta:
         model = Staff
-        fields = ['user_data','dob', 'address', 'phone', 'cv', 'video_cv', 'role','nid_number', 'gender','about','country','post_code','skills', 'bank_details', 'experience']
+        fields = ['dob', 'address', 'phone', 'cv', 'video_cv', 'avatar', 'role','nid_number', 'gender','about','country','post_code','skills', 'bank_details', 'experience']
 
-
+    # def validate_user_data(self, value):
+    #     try:
+    #         return json.loads(value)
+    #     except json.JSONDecodeError:
+    #         raise serializers.ValidationError("Invalid JSON for user_data.")
+        
     def create(self, validated_data):
+        print('validated data', validated_data)
+        
         skills = validated_data.pop('skills', [])
         experience = validated_data.pop('experience', [])
-        bank_details = validated_data.pop('bank_details',None)
+        bank_details = validated_data.pop('bank_details',{})
 
         user = self.context['request'].user
-        user_data = validated_data.pop('user_data')
+        # user_data = validated_data.pop('user_data',{})
         # save staff profile 
         staff_profile = Staff.objects.create(user=user,**validated_data)
         # check if any value in skills have 
