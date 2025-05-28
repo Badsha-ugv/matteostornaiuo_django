@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StaffSignupSerializer(serializers.ModelSerializer):
-    client_invitation_code = serializers.CharField(max_length=100, write_only=True, required=False, allow_null=True)
+    client_invitation_code = serializers.CharField(max_length=100, write_only=True, required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = User
