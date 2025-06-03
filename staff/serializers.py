@@ -158,7 +158,16 @@ class StaffSerializer(serializers.ModelSerializer):
         return data
 
 class StaffReviewSerializer(serializers.ModelSerializer):
+    review_by = serializers.SerializerMethodField(read_only=True, required=False)
     class Meta:
         model = StaffReview
         fields = '__all__'
+    
+    def get_review_by(self, obj):
+        review_by = {
+            "company_id": obj.review_by.id,
+            "company_name": obj.review_by.company_name,
+            "company_log": obj.review_by.company_logo.url if obj.review_by.company_logo else None,
+        }
         
+        return review_by

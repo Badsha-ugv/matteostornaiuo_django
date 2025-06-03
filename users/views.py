@@ -5,16 +5,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from jwt.exceptions import InvalidTokenError
 
 from rest_framework.permissions import AllowAny
-
 from .serializers import (
     StaffSignupSerializer,
     ClientSignupSerializer,
-    UserSerializer,
     StaffInvitationSerializer,
     SkillSerializer,
     JobRoleSerializer,
@@ -35,8 +33,7 @@ class StaffSignupAPIView(APIView):
 
     def post(self, request):
         # invited_user = StaffInvitation.objects.all()
-        # print("Invited user", invited_user)
-        
+        # print("Invited user", invited_user) 
         password = request.POST.get("password", None)
         confirm_password = request.POST.get("confirm_password", None)
         if password == confirm_password:
@@ -46,7 +43,7 @@ class StaffSignupAPIView(APIView):
 
             staff_member = User.objects.get(email=serializer.data["email"])
 
-            # send_staff_signup_email(staff_member)
+            send_staff_signup_email(staff_member.email)
             refresh = RefreshToken.for_user(staff_member)
             tokens = {
                 "refresh": str(refresh),
@@ -152,6 +149,7 @@ class StaffInvitationList(APIView):
 
 # skill api
 
+
 class SkillList(APIView):
     permission_classes = [AllowAny]
 
@@ -165,6 +163,7 @@ class SkillList(APIView):
             "data": serializer.data
         }
         return Response(response_data)
+
 
 class JobRoleList(APIView):
     permission_classes = [AllowAny]
@@ -180,9 +179,10 @@ class JobRoleList(APIView):
         }
         return Response(response_data)
 
+
 class UniformList(APIView):
     permission_classes = [AllowAny]
-    
+
     def get(self, request, format=None):
         uniforms = Uniform.objects.all()
         serializer = UniformSerializer(uniforms, many=True)
@@ -194,12 +194,6 @@ class UniformList(APIView):
         }
         return Response(response_data)
 
-
-
-
-
-
-# logout 
 
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]

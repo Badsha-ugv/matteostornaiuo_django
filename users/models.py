@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
-from project.s3bucket import     CustomS3Storage
+from project.s3bucket import CustomS3Storage
 from .managers import UserManager
 
 
@@ -59,7 +59,6 @@ class JobRole(models.Model):
         super().save(*args, **kwargs)
 
 
-
 class Uniform(models.Model):
     job_role = models.ForeignKey(
         JobRole, related_name="uniforms", on_delete=models.CASCADE
@@ -67,6 +66,7 @@ class Uniform(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to="images/uniforms/", max_length=255, storage=CustomS3Storage(), blank=True, null=True)
+    
     def __str__(self):
         return f'{self.job_role} - {self.name}'
 

@@ -1,4 +1,4 @@
-from rest_framework import fields, serializers
+from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
@@ -35,16 +35,30 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StaffSignupSerializer(serializers.ModelSerializer):
-    client_invitation_code = serializers.CharField(max_length=100, write_only=True, required=False, allow_null=True, allow_blank=True)
+    client_invitation_code = serializers.CharField(
+        max_length=100,
+        write_only=True,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
 
     class Meta:
         model = User
-        fields = ["id", "email", "phone_number", "first_name", "last_name", "client_invitation_code", "password"]
+        fields = [
+            "id",
+            "email",
+            "phone_number",
+            "first_name",
+            "last_name",
+            "client_invitation_code",
+            "password",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
 
-        # # for removing otp 
+        # # for removing otp
         # invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
         # if invited_user:
         #     invited_user[0].invitation_code = None
@@ -53,7 +67,9 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         try:
             validate_password(validated_data["password"])  # Validate the password
         except ValidationError as e:
-            raise serializers.ValidationError({"password": e.messages})  # Return errors properly
+            raise serializers.ValidationError(
+                {"password": e.messages}
+            )  # Return errors properly
 
         # invitations_obj = Invitation.objects.filter(staff_email=validated_data["email"]).first()
         if validate_password(validated_data["password"]) == None:
@@ -61,26 +77,28 @@ class StaffSignupSerializer(serializers.ModelSerializer):
             user = User.objects.create(
                 # username=validated_data["username"],
                 email=validated_data["email"],
-                phone_number = validated_data["phone_number"],
+                phone_number=validated_data["phone_number"],
                 first_name=validated_data["first_name"],
                 last_name=validated_data["last_name"],
                 password=password,
                 is_staff=True,
             )
-        # add invited users to my staff list 
-        invitations_obj = InviteMystaff.objects.filter(staff_email=validated_data["email"]).first()
+        # add invited users to my staff list
+        invitations_obj = InviteMystaff.objects.filter(
+            staff_email=validated_data["email"]
+        ).first()
 
         if invitations_obj:
-            # if not invitations_obj.invitation_code == validated_data['invitation_code'] 
+            # if not invitations_obj.invitation_code == validated_data['invitation_code']
             invitations_obj.is_joined = True
             invitations_obj.save()
-            
 
         #     invited_by = invitations_obj.staff_invitation.user
         #     client = CompanyProfile.objects.get(user=invited_by)
         #     MyStaff.objects.create(user=user, client=client, status=True)
-        #     # send email to invited staff 
+        #     # send email to invited staff
         return user
+
     # def save(self, *args, **kwargs):
     #     invited_user = StaffInvitation.objects.all()
     #     print("inv users data: ", invited_user)
@@ -90,7 +108,7 @@ class StaffSignupSerializer(serializers.ModelSerializer):
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
-        fields = '__all__'
+        fields = "__all__"
 
 
 class ClientSignupSerializer(serializers.ModelSerializer):
@@ -100,13 +118,14 @@ class ClientSignupSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "first_name", "last_name", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
-
     def create(self, validated_data):
 
         try:
             validate_password(validated_data["password"])  # Validate the password
         except ValidationError as e:
-            raise serializers.ValidationError({"password": e.messages})  # Return errors properly
+            raise serializers.ValidationError(
+                {"password": e.messages}
+            )  # Return errors properly
 
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
@@ -124,7 +143,7 @@ class ClientSignupSerializer(serializers.ModelSerializer):
 class JobRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobRole
-        fields = ["id", "name","staff_price"]
+        fields = ["id", "name", "staff_price"]
 
 
 class UniformSerializer(serializers.ModelSerializer):
@@ -136,7 +155,9 @@ class UniformSerializer(serializers.ModelSerializer):
 #  invite staff from clients
 class InviteSerializer(serializers.ModelSerializer):
     # job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
-    job_role = serializers.SlugRelatedField(queryset=JobRole.objects.all(), slug_field="name")
+    job_role = serializers.SlugRelatedField(
+        queryset=JobRole.objects.all(), slug_field="name"
+    )
 
     class Meta:
         model = Invitation
@@ -177,5 +198,8 @@ class StaffInvitationSerializer(serializers.ModelSerializer):
                 staff_invitation=staff_invitation, **invitation_data
             )
 
-            send_staff_invitation_email_from_client(invitation_data['staff_email'], f"{invitation_data['staff_email']} {invitation_data['invitation_code']}")
+            send_staff_invitation_email_from_client(
+                invitation_data["staff_email"],
+                f"{invitation_data['staff_email']} {invitation_data['invitation_code']}",
+            )
         return staff_invitation
