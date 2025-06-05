@@ -141,7 +141,7 @@ DATABASES = {
         'NAME': 'matteostornaiuo',
         'USER': 'matteostornaiuo',
         'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '13.53.162.107',
+        'HOST': '16.16.199.236',
         'PORT': '5432',
     }
 }
