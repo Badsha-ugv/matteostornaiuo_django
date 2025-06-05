@@ -15,7 +15,7 @@ class Conversation(models.Model):
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
-    
+
 
     def __str__(self):
         return f'Message from {self.sender.first_name} to {self.receiver.last_name} at {self.timestamp}'
@@ -23,4 +23,9 @@ class Conversation(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
+
+# class ChatList(models.Model):
+#     me = models.ForeignKey(User, on_delete=models.CASCADE)
+#     to = models.ForeignKey(User, on_delete=models.CASCADE)
+#     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 

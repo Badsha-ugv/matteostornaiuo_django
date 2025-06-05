@@ -88,6 +88,7 @@ class VacancySerializer(serializers.ModelSerializer):
     job_name = serializers.SerializerMethodField(read_only=True)
     compoany_image = serializers.SerializerMethodField(read_only=True)
     applicants = serializers.SerializerMethodField()
+    job_title = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Vacancy
@@ -95,6 +96,9 @@ class VacancySerializer(serializers.ModelSerializer):
 
     def get_job_name(self, obj):
         return obj.job.title
+    
+    def get_job_title(self, obj):
+        return obj.job_title.name
     
     def get_compoany_image(self, obj):
         # get company profile image with query optimization
