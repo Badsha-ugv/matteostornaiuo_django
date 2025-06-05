@@ -86,6 +86,7 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 class VacancySerializer(serializers.ModelSerializer):
     application_status = serializers.SerializerMethodField(read_only=True)
     job_name = serializers.SerializerMethodField(read_only=True)
+    compoany_image = serializers.SerializerMethodField(read_only=True)
     applicants = serializers.SerializerMethodField()
 
     class Meta:
@@ -95,6 +96,12 @@ class VacancySerializer(serializers.ModelSerializer):
     def get_job_name(self, obj):
         return obj.job.title
     
+    def get_compoany_image(self, obj):
+        # get company profile image with query optimization
+        company = obj.job.company
+        if company.company_logo:
+            return company.company_logo.url
+        return None
 
     def get_application_status(self, obj):
         # Use prefetched applications if available

@@ -396,7 +396,7 @@ class FeedJobView(APIView):
 
         vacancies = (
             Vacancy.objects.filter(job_status="active")
-            .select_related("job", "job_title", "uniform")
+            .select_related("job__company", "job_title", "uniform")
             .prefetch_related(
                 "skills",
                 "participants",
