@@ -401,7 +401,9 @@ class StaffJobView(APIView): # jobapplication
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
             if application.is_approve:
-                if data['type'] == 'checkin' and application.checkin_approve is False:
+                if data['type'] == 'checkin':
+                    
+
                     # if already checkedin 
                     if Checkin.objects.filter(application=application).exists():
                         response_data = {
@@ -430,7 +432,15 @@ class StaffJobView(APIView): # jobapplication
                     return Response(response_data, status=status.HTTP_200_OK)
                 
 
-                elif data['type'] == 'checkout' and application.checkout_approve is False and application.checkin_approve is True:
+                if data['type'] == 'checkout':
+                    if not application.checkin_approve is True:
+                        response_data = {
+                            "status": status.HTTP_400_BAD_REQUEST,
+                            "success": False,
+                            "message": "You have not checked in this"
+                        }
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    
                     # if already checkedout
                     if Checkout.objects.filter(application=application).exists():
                         response_data = {
@@ -458,13 +468,7 @@ class StaffJobView(APIView): # jobapplication
                         message=f'{staff} has checked out for {application.vacancy.job_title}! Approve the checkout request.'
                     )
                     return Response(response_data, status=status.HTTP_200_OK)
-                else:
-                    response_data = {
-                        "status": status.HTTP_400_BAD_REQUEST,
-                        "success": False,
-                        "message": "Shift already checked in/out"
-                    }
-                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                
         response_data = {
             "status": status.HTTP_400_BAD_REQUEST,
             "success": False,
