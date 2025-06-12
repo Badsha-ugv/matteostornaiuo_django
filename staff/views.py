@@ -437,7 +437,7 @@ class StaffJobView(APIView): # jobapplication
                         response_data = {
                             "status": status.HTTP_400_BAD_REQUEST,
                             "success": False,
-                            "message": "You have not checked in this"
+                            "message": "Your checkin request is not approved yet"
                         }
                         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     
