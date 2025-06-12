@@ -324,7 +324,9 @@ class StaffJobView(APIView): # jobapplication
                 
                 "job_status": job_application.job_status,
                 "checkin_approve": job_application.checkin_approve,
-                "checkout_approve": job_application.checkout_approve
+                "checkout_approve": job_application.checkout_approve,
+                "checkin_status": "checkin" if job_application.checkin_approve else "pending",
+                "checkout_status": "checkout" if job_application.checkout_approve else "pending"
 
             }
             response_data = {
@@ -351,7 +353,9 @@ class StaffJobView(APIView): # jobapplication
                 'location': application.vacancy.location,
                 "job_status": application.job_status,
                 "checkin_approve": application.checkin_approve,
-                "checkout_approve": application.checkout_approve
+                "checkout_approve": application.checkout_approve,
+                "checkin_status": "checkin" if application.checkin_approve else "pending",
+                "checkout_status": "checkout" if application.checkout_approve else "pending"
             }
             applications.append(obj)
         
