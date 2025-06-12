@@ -716,9 +716,31 @@ class CheckInView(APIView):
         #     return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
         
         combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
+        if data['type'] == True:
         # checkin.in_time = make_aware(combine_time)
-        checkin.is_approved = True
-        checkin.save()
+            checkin.is_approved = True
+            checkin.checkin_status = 'approved'
+            checkin.save()
+
+        elif data['type'] == False:
+            checkin.is_approved = False
+            checkin.checkin_status = 'declined'
+            checkin.save()
+            # send notification to staff
+            Notification.objects.create(
+                user = application.applicant.user,
+                message = f"Your check-in request for {application.vacancy.job_title} has been declined",
+            )
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job check-in request declined"
+            }
+            return Response(response,status=status.HTTP_200_OK)
+        else:
+            checkin.is_approved = True
+            checkin.checkin_status = 'approved'
+            checkin.save()
 
         application.in_time =make_aware(combine_time)
         application.checkin_approve = True
@@ -839,8 +861,29 @@ class CheckOutView(APIView):
 
         combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
         
-        checkout.is_approved = True
-        checkout.save()
+        if data['type'] == True:
+            checkout.is_approved = True
+            checkout.checkout_status = 'approved'
+            checkout.save()
+        elif data['type'] == False:
+            checkout.is_approved = False
+            checkout.checkout_status = 'declined'
+            checkout.save()
+            # send notification to staff
+            Notification.objects.create(
+                user = application.applicant.user,
+                message = f"Your check-out request for {application.vacancy.job_title} has been declined",
+            )
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job check-out request declined"
+            }
+            return Response(response,status=status.HTTP_200_OK)
+        else:
+            checkout.is_approved = True
+            checkout.checkout_status = 'approved'
+            checkout.save()
 
         application.out_time = make_aware(combine_time)
         application.job_status = 'completed'

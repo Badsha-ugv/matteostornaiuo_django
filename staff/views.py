@@ -293,6 +293,7 @@ class StaffJobView(APIView): # jobapplication
         if pk:
             try:
                 job_application = JobApplication.objects.get(applicant=staff, id=pk)
+                
             except JobApplication.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_404_NOT_FOUND,
@@ -300,6 +301,9 @@ class StaffJobView(APIView): # jobapplication
                     "message": "Job not found"
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            
+            checkin_status = Checkin.objects.filter(application=job_application).first()
+            checkout_status = Checkout.objects.filter(application=job_application).first()
             
             # serializer = JobApplicationSerializer(job_application)
             obj = {
@@ -325,8 +329,8 @@ class StaffJobView(APIView): # jobapplication
                 "job_status": job_application.job_status,
                 "checkin_approve": job_application.checkin_approve,
                 "checkout_approve": job_application.checkout_approve,
-                "checkin_status": "checkin" if job_application.checkin_approve else "pending",
-                "checkout_status": "checkout" if job_application.checkout_approve else "pending"
+                "checkin_status": checkin_status.checkin_status if checkin_status else "Not Checked In",
+                "checkout_status": checkout_status.checkout_status if checkout_status else "Not Checked Out"
 
             }
             response_data = {
@@ -338,9 +342,13 @@ class StaffJobView(APIView): # jobapplication
             return Response(response_data, status=status.HTTP_200_OK)
         # upcomming job list
         job_application = JobApplication.objects.filter(applicant=staff,is_approve=True).select_related('vacancy','applicant')
+
+        
         # application_serializer = JobApplicationSerializer(job_application, many=True)
         applications = []
         for application in job_application:
+            checkin_status = Checkin.objects.filter(application=application).first()
+            checkout_status = Checkout.objects.filter(application=application).first()
             obj = {
                 'id': application.id,
                 'job_title': application.vacancy.job.title,
@@ -354,8 +362,8 @@ class StaffJobView(APIView): # jobapplication
                 "job_status": application.job_status,
                 "checkin_approve": application.checkin_approve,
                 "checkout_approve": application.checkout_approve,
-                "checkin_status": "checkin" if application.checkin_approve else "pending",
-                "checkout_status": "checkout" if application.checkout_approve else "pending"
+                "checkin_status": checkin_status.checkin_status if checkin_status else "Not Checked In",
+                "checkout_status": checkout_status.checkout_status if checkout_status else "Not Checked Out"
             }
             applications.append(obj)
         

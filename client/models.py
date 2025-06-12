@@ -189,11 +189,18 @@ class StaffInvitation(models.Model):
     def __str__(self):
         return f'{self.staff.user.email} -invited in {self.vacancy.job_title}'
 
+CHECK_STATUS = (
+    ('pending', 'PENDING'),
+    ('approved', 'APPROVED'),
+    ('rejected', 'REJECTED'),
+    ('late', 'LATE'),
+)
 class Checkin(models.Model):
     application = models.ForeignKey(JobApplication, on_delete=models.CASCADE)
     in_time = models.DateTimeField(blank=True, null=True)
     location =  models.CharField(max_length=255, blank=True, null=True)
     distance = models.IntegerField(default=0, blank=True, null=True, editable=False)
+    checkin_status = models.CharField(max_length=10, choices=CHECK_STATUS, default='pending')
     is_approved = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -212,6 +219,7 @@ class Checkout(models.Model):
     out_time = models.DateTimeField(blank=True, null=True)
     location =  models.CharField(max_length=255, blank=True, null=True)
     distance = models.IntegerField(default=0, blank=True, null=True)
+    checkout_status = models.CharField(max_length=10, choices=CHECK_STATUS, default='pending')
     is_approved = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
