@@ -36,6 +36,7 @@ urlpatterns = [
 
     # job checkin 
     path('company/job/applications/checkin/', views.CheckInView.as_view()),
+    # path('company/job/vacancy/applications/checkin/<int:vacancy_id>/', views.CheckInView.as_view()),
     path('company/job/applications/checkin/<int:pk>/', views.CheckInView.as_view()),
     
     # job checkout

@@ -433,13 +433,13 @@ class StaffJobView(APIView): # jobapplication
                 
 
                 if data['type'] == 'checkout':
-                    if not application.checkin_approve is True:
-                        response_data = {
-                            "status": status.HTTP_400_BAD_REQUEST,
-                            "success": False,
-                            "message": "Your checkin request is not approved yet"
-                        }
-                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    # if not application.checkin_approve is True:
+                    #     response_data = {
+                    #         "status": status.HTTP_400_BAD_REQUEST,
+                    #         "success": False,
+                    #         "message": "Your checkin request is not approved yet"
+                    #     }
+                    #     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
                     
                     # if already checkedout
                     if Checkout.objects.filter(application=application).exists():

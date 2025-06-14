@@ -15,7 +15,7 @@ from django.core.files.storage import default_storage
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.utils.timesince import timesince
-from django.utils.timezone import now, make_aware
+from django.utils.timezone import now, make_aware, localtime
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -579,119 +579,108 @@ class JobApplicationAPI(APIView): # pending actions page approve job
 
 class CheckInView(APIView):
 
-    def get(self, request, vacancy_id=None, pk=None, *args, **kwargs):
+    def get(self, request, vacancy_id=None, *args, **kwargs):
         user = request.user
-        client = CompanyProfile.objects.get(user=user)
+        client = CompanyProfile.objects.select_related('user').get(user=user)
 
-        if vacancy_id:
-            try:
-                vacancy = Vacancy.objects.get(id=vacancy_id).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants')
-            except Vacancy.DoesNotExist:
-                return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False).order_by('created_at')
-            # applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False)
-            # serializer = JobApplicationSerializer(applications, many=True)
-            checkin_applications = []
-            for application in applications:
-                obj = {
-                    "application_id": application.id,
-                    "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
-                    "staff_id": application.applicant.id,
-                    "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
-                    "age": application.applicant.age,
-                    "gender": application.applicant.gender,
-                    "timesince":  f"{timesince(application.created_at)} ago",
-                    "date": application.created_at.date(),
-                    # format time in H:M:s format
-                    "time": application.created_at.strffime('%H:%M:%S'),
-                    "job_status": application.job_status,
-                    "checkin_approved": application.checkin_approve,
-                    "checkout_approved": application.checkout_approve,
-                }
-                checkin_applications.append(obj)
+        # if vacancy_id:
+        #     try:
+        #         vacancy = Vacancy.objects.select_related(
+        #             'job', 'job_title', 'uniform'
+        #         ).prefetch_related(
+        #             'skills', 'participants'
+        #         ).get(id=vacancy_id)
+        #     except Vacancy.DoesNotExist:
+        #         return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
 
-            response_data = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "Job checkin request",
-                "data": checkin_applications
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        
+        #     applications = JobApplication.objects.select_related(
+        #         'vacancy',
+        #         'vacancy__job',
+        #         'applicant',
+        #         'applicant__user'
+        #     ).filter(
+        #         vacancy=vacancy,
+        #         is_approve=True,
+        #         checkin_approve=False
+        #     ).order_by('created_at')
 
-        # vacancy = list(Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('job','uniform','job_title').prefetch_related('skills','participants').values_list('id', flat=True))
+        #     checkin_applications = []
+        #     for application in applications:
+        #         applicant = application.applicant
+        #         user = applicant.user
+        #         created_at = localtime(application.created_at)
 
-        # try:
-        #     applications = JobApplication.objects.filter(vacancy__in=vacancy,is_approve=True).select_related('vacancy', 'applicant').distinct().order_by('-created_at')
-        # except JobApplication.DoesNotExist:
-        #     return Response({"error": "No job checkin request found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        # # serializer = JobApplicationSerializer(applications, many=True)
-        # checkin_applications = []
-        # for application in applications:
-        #     obj = {
-        #         "application_id": application.id,
-        #         "job_title": application.vacancy.job.title,
-        #         "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
-        #         "staff_role": application.applicant.role.name,
-        #         "staff_id": application.applicant.id,
-        #         "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
-        #         "age": application.applicant.age,
-        #         "gender": application.applicant.gender,
-        #         "timesince":  f"{timesince(application.created_at)} ago",
-        #         # format date and time
-        #         "date": application.created_at.date(),
-        #         "time": application.created_at.time(),
-        #         "job_status": application.job_status,
-        #         "checkin_approved": application.checkin_approve,
-        #         "checkout_approved": application.checkout_approve,
-                
-        #         # "time": application.in_time.time() if application.in_time else None,
-        #         # "location": application.checkin_location,
-        #     }
-        #     checkin_applications.append(obj)
+        #         checkin_applications.append({
+        #             "application_id": application.id,
+        #             "staff_name": f"{user.first_name} {user.last_name}",
+        #             "staff_id": applicant.id,
+        #             "staff_profile": applicant.avatar.url if applicant.avatar else None,
+        #             "age": applicant.age,
+        #             "gender": applicant.gender,
+        #             "timesince": f"{timesince(created_at)} ago",
+        #             "date": created_at.date(),
+        #             "time": created_at.strftime('%H:%M:%S'),
+        #             "job_status": application.job_status,
+        #             "checkin_approved": application.checkin_approve,
+        #             "checkout_approved": application.checkout_approve,
+        #         })
 
-        # UPDATED CODE FOR GETTING ALL CHECKIN REQUEST FROM CHECKIN MODEL
-        checkin_obj = Checkin.objects.filter(application__vacancy__job__company = client)
+        #     return Response({
+        #         "status": status.HTTP_200_OK,
+        #         "success": True,
+        #         "message": "Job checkin request for vacancy ",
+        #         "data": checkin_applications
+        #     }, status=status.HTTP_200_OK)
 
+        # ------- Optimize Checkin Section --------
+        checkin_qs = Checkin.objects.select_related(
+            'application',
+            'application__vacancy',
+            'application__vacancy__job',
+            'application__applicant',
+            'application__applicant__user',
+            'application__applicant__role'
+        ).filter(application__vacancy__job__company=client)
 
         checkin_requests = []
-        for obj in checkin_obj:
-            obj = {
+        for obj in checkin_qs:
+            application = obj.application
+            applicant = application.applicant
+            user = applicant.user
+            created_at = localtime(obj.created_at)
+
+            checkin_requests.append({
                 "id": obj.id,
-                "application_id": obj.application.id,
-                "job_title": obj.application.vacancy.job.title,
-                "staff_name": obj.application.applicant.user.first_name + obj.application.applicant.user.last_name,
-                "staff_role": obj.application.applicant.role.name,
-                "staff_id": obj.application.applicant.id,
-                "staff_profile": obj.application.applicant.avatar.url if obj.application.applicant.avatar else None,
-                "age": obj.application.applicant.age,
-                "gender": obj.application.applicant.gender,
-                "timesince":  f"{timesince(obj.application.created_at)} ago",
-                # format date and time
-                "date": obj.created_at.date(),
-                "time": obj.created_at.strftime('%H:%M:%S'),
-                "job_status": obj.application.job_status,
-                "checkin_approved": obj.application.checkin_approve,
-                # "checkout_approved": obj.checkout_approve,
+                "application_id": application.id,
+                "job_title": application.vacancy.job.title,
+                "staff_name": f"{user.first_name} {user.last_name}",
+                "staff_role": applicant.role.name,
+                "staff_id": applicant.id,
+                "staff_profile": applicant.avatar.url if applicant.avatar else None,
+                "age": applicant.age,
+                "gender": applicant.gender,
+                "timesince": f"{timesince(application.created_at)} ago",
+                "date": created_at.date(),
+                "time": created_at.strftime('%H:%M:%S'),
+                "job_status": application.job_status,
+                "checkin_approved": application.checkin_approve,
+            })
 
-            }
-            checkin_requests.append(obj)
-
-        response_data = {
+        return Response({
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "Job Checkin Request",
             "data": checkin_requests
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
     
 
     
     def post(self, request, vacancy_id=None, pk=None, *args, **kwargs):
         user = request.user
         data = request.data
+
+        if not user and not user.is_client:
+            return Response({"error": "No Company Profile found"}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             client = CompanyProfile.objects.get(user=user)
@@ -706,23 +695,23 @@ class CheckInView(APIView):
         if application.vacancy.job.company != client:
             return Response({"error": "Only client can check in this job application"}, status=status.HTTP_403_FORBIDDEN)
         
-        if application.checkin_approve:
-            return Response({"error": "Job check-in request has already been approved"}, status=status.HTTP_400_BAD_REQUEST)
-        
         if not application.is_approve:
             return Response({"error": "Job application has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if application.checkin_approve:
+            return Response({"error": "Job check-in request has already been approved"}, status=status.HTTP_400_BAD_REQUEST)
         
         # if not application.in_time or not application.checkin_location:
         #     return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
         
         combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
-        if data['type'] == True:
+        if data['accept'] == True:
         # checkin.in_time = make_aware(combine_time)
             checkin.is_approved = True
             checkin.checkin_status = 'approved'
             checkin.save()
 
-        elif data['type'] == False:
+        elif data['accept'] == False:
             checkin.is_approved = False
             checkin.checkin_status = 'declined'
             checkin.save()
@@ -767,56 +756,41 @@ class CheckOutView(APIView):
             client = CompanyProfile.objects.get(user=user)
         except CompanyProfile.DoesNotExist:
             return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
-        
-        # vacancy = list(Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).distinct().values_list('id', flat=True) )
 
-        # job_application = JobApplication.objects.filter(vacancy__id__in=vacancy).select_related('vacancy','applicant').distinct().exclude(checkin_approve=False).order_by('-created_at')
+        checkout_obj = Checkout.objects.select_related(
+            'application',
+            'application__vacancy',
+            'application__vacancy__job',
+            'application__applicant',
+            'application__applicant__user',
+            'application__applicant__role'
+        ).filter(application__vacancy__job__company=client)
 
-        
-        # # serializer = JobApplicationSerializer(job_application, many=True)
-        # checkout_applications = []
-        # for application in job_application:
-        #     obj = {
-        #         "application_id": application.id,
-        #         "job_title": application.vacancy.job.title,
-        #         "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
-        #         "staff_role": application.applicant.role.name,
-        #         "staff_id": application.applicant.id,
-        #         "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
-        #         "age": application.applicant.age,
-        #         "gender": application.applicant.gender,
-        #         "timesince":  f"{timesince(application.created_at)} ago",
-        #         # format date and time
-        #         "date": application.created_at.date(),
-        #         "time": application.created_at.time(),
-        #         "job_status": application.job_status,
-        #         "checkout_approved": application.checkout_approve,
-        #         # "time": application.in_time.time() if application.in_time else None,
-        #         # "location": application.checkin_location,
-        #     }
-        #     checkout_applications.append(obj)
-
-        checkout_obj = Checkout.objects.filter(application__vacancy__job__company = client)
         checkin_requests = []
         for obj in checkout_obj:
+            application = obj.application
+            applicant = application.applicant
+            user = applicant.user
+            created_at = localtime(obj.created_at)
+
             obj = {
                 "id": obj.id,
-                "application_id": obj.application.id,
+                "application_id": application.id,
                 # "vacancy_id": obj.application.vacancy.id,
-                "job_title": obj.application.vacancy.job.title,
-                "staff_name": obj.application.applicant.user.first_name + obj.application.applicant.user.last_name,
-                "staff_role": obj.application.applicant.role.name,
-                "staff_id": obj.application.applicant.id,
-                "staff_profile": obj.application.applicant.avatar.url if obj.application.applicant.avatar else None,
-                "age": obj.application.applicant.age,
-                "gender": obj.application.applicant.gender,
-                "timesince":  f"{timesince(obj.application.created_at)} ago",
+                "job_title": application.vacancy.job.title,
+                "staff_name": applicant.user.first_name + applicant.user.last_name,
+                "staff_role": applicant.role.name,
+                "staff_id": applicant.id,
+                "staff_profile": applicant.avatar.url if applicant.avatar else None,
+                "age": applicant.age,
+                "gender": applicant.gender,
+                "timesince":  f"{timesince(application.created_at)} ago",
                 # format date and time
-                "date": obj.created_at.date(),
-                "time": obj.created_at.strftime('%H:%M:%S'),
-                "job_status": obj.application.job_status,
-                "checkin_approved": obj.application.checkin_approve,
-                "checkout_approved": obj.application.checkout_approve,
+                "date": created_at.date(),
+                "time": created_at.strftime('%H:%M:%S'),
+                "job_status": application.job_status,
+                "checkin_approved": application.checkin_approve,
+                "checkout_approved": application.checkout_approve,
 
             }
             checkin_requests.append(obj)
@@ -832,13 +806,14 @@ class CheckOutView(APIView):
     def post(self, request, pk, **kwargs):
         user = request.user
         data = request.data
+
         try:
-            client = CompanyProfile.objects.get(user=user)
+            client = CompanyProfile.objects.select_related('user').get(user=user)
         except CompanyProfile.DoesNotExist:
             return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
         
         try:
-            checkout = Checkout.objects.get(id=pk)
+            checkout = Checkout.objects.select_related('application').get(id=pk)
             application = checkout.application
         except Checkout.DoesNotExist:
             return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -846,8 +821,8 @@ class CheckOutView(APIView):
         if application.vacancy.job.company != client:
                 return Response({"error": "Only client can check out this job application"}, status=status.HTTP_403_FORBIDDEN)
         
-        if not application.checkin_approve:
-            return Response({"error": "Job check-in request has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+        # if not application.checkin_status:
+        #     return Response({"error": "Job check-in request has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
         
         if application.vacancy.job.company != client:
             return Response({"error": "Only client can check out this job application"}, status=status.HTTP_403_FORBIDDEN)
@@ -861,11 +836,11 @@ class CheckOutView(APIView):
 
         combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
         
-        if data['type'] == True:
+        if data['accept'] and data['accept'] == True:
             checkout.is_approved = True
             checkout.checkout_status = 'approved'
             checkout.save()
-        elif data['type'] == False:
+        elif data['accept'] and data['accept'] == False:
             checkout.is_approved = False
             checkout.checkout_status = 'declined'
             checkout.save()
@@ -880,7 +855,7 @@ class CheckOutView(APIView):
                 "message": "Job check-out request declined"
             }
             return Response(response,status=status.HTTP_200_OK)
-        else:
+        else: # temporary for not changin web url
             checkout.is_approved = True
             checkout.checkout_status = 'approved'
             checkout.save()
