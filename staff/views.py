@@ -1175,14 +1175,45 @@ class CancelJobAPIView(APIView):
                 
 
 class JobReportView(APIView):
-    def get(self, request,application_id,pk=None):
+    def get(self, request,application_id=None):
         user = request.user
         # get 'past' from query params
-        params = request.query_params.get('past', None)
+        # params = request.query_params.get('past', None)
         if user.is_staff:
             staff = Staff.objects.filter(user=user).first()
+            if application_id is None:
+                job_application = JobApplication.objects.filter(applicant=staff, is_approve=True).select_related('vacancy','applicant')
+                job_reports = JobReport.objects.filter(job_application__in=job_application).select_related('job_application__vacancy__job__company')
+                print('job reports', job_reports)
+                report = []
+                for job_report in job_reports:
+                    data = {
+                            "id": job_report.id,
+                            "full_name": job_report.job_application.applicant.user.first_name + " " + job_report.job_application.applicant.user.last_name,
+                            "job_role": job_report.job_application.vacancy.job_title.name,
+                            "date": job_report.job_application.vacancy.open_date,
+                            "start_time": job_report.job_application.vacancy.start_time,
+                            "end_time": job_report.job_application.vacancy.end_time,
+                            "total_working_hours": job_report.job_application.total_working_hours,
+                            "base_salary": job_report.job_application.vacancy.job_title.staff_price,
+                            "regular_pay": job_report.regular_pay,
+                            "overtime_pay": job_report.overtime_pay,
+                            "tips": job_report.tips,
+                            "total_pay": job_report.total_pay,
+                            "created_at": job_report.created_at
+                        
+                        }
+                    report.append(data)
+                    response_data = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Job Report retrieved successfully",
+                        "data": report
+                    }
+                return Response(response_data, status=status.HTTP_200_OK)
+
             try:
-                job_application = JobApplication.objects.get(id=application_id)
+                job_application = JobApplication.objects.get(id=application_id, applicant=staff)
             except JobApplication.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_404_NOT_FOUND,
@@ -1190,42 +1221,43 @@ class JobReportView(APIView):
                     "message": "Job Application not found"
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-            if params =='' or params == None:
+            # if params =='' or params == None:
                 # get current application report
-                job_report = JobReport.objects.filter(job_application=job_application).first()
-                if job_report:
-                    data = {
-                        "id": job_report.id,
-                        "full_name": job_report.job_application.applicant.user.first_name + " " + job_report.job_application.applicant.user.last_name,
-                        "job_role": job_application.vacancy.job_title.name,
-                        "date": job_application.vacancy.open_date,
-                        "start_time": job_application.vacancy.start_time,
-                        "end_time": job_application.vacancy.end_time,
-                        "total_working_hours": job_application.total_working_hours,
-                        "base_salary": job_application.vacancy.job_title.staff_price,
-                        "regular_pay": job_report.regular_pay,
-                        "overtime_pay": job_report.overtime_pay,
-                        "tips": job_report.tips,
-                        "total_pay": job_report.total_pay,
-                        "created_at": job_report.created_at
-                    
-                    }
-                    response = {
-                        "status": status.HTTP_200_OK,
-                        "success": True,
-                        "message": "Job Report retrieved successfully",
-                        "data": data
-                    }
-                    return Response(response, status=status.HTTP_200_OK)
-                    
-                else:
-                    response = {
-                        "status": status.HTTP_200_OK,
-                        "success": True,
-                        "message": "No report found",
-                        "data": []
-                    }
-                    return Response(response, status=status.HTTP_200_OK)
+            job_report = JobReport.objects.filter(job_application=job_application).first()
+            if job_report:
+                data = {
+                    "id": job_report.id,
+                    "full_name": job_report.job_application.applicant.user.first_name + " " + job_report.job_application.applicant.user.last_name,
+                    "job_role": job_application.vacancy.job_title.name,
+                    "date": job_application.vacancy.open_date,
+                    "start_time": job_application.vacancy.start_time,
+                    "end_time": job_application.vacancy.end_time,
+                    "total_working_hours": job_application.total_working_hours,
+                    "base_salary": job_application.vacancy.job_title.staff_price,
+                    "regular_pay": job_report.regular_pay,
+                    "overtime_pay": job_report.overtime_pay,
+                    "tips": job_report.tips,
+                    "total_pay": job_report.total_pay,
+                    "created_at": job_report.created_at
+                
+                }
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Job Report retrieved successfully",
+                    "data": data
+                }
+                return Response(response, status=status.HTTP_200_OK)
+                
+            else:
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "No report found",
+                    "data": []
+                }
+                return Response(response, status=status.HTTP_200_OK)
+           
         return Response({
             "status": status.HTTP_403_FORBIDDEN,
             "success": False,
