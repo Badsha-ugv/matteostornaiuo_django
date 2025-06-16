@@ -52,6 +52,8 @@ urlpatterns =[
     path('staff/review/job-history/<int:pk>/', views.JobHistoryPreveiw.as_view()),
     path('staff/review/review-list/<int:pk>/', views.ReviewPreview.as_view()),
 
+    path('staff/applications/status/', views.ApplicationStatusAPIView.as_view()), # get all applications status
+
 
 ]
 

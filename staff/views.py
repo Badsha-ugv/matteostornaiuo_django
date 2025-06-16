@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from datetime import datetime
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Case, When, Q
 
 import csv
 from io import StringIO
@@ -278,34 +278,42 @@ class JobApplicationView(APIView):
 
 class StaffJobView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
-        """UPCOMMING JOB LIST"""
+        """UPCOMING JOB LIST / DETAIL"""
         user = request.user
         try:
             staff = Staff.objects.get(user=user)
         except Staff.DoesNotExist:
-            response_data = {
+            return Response({
                 "status": status.HTTP_403_FORBIDDEN,
                 "success": False,
                 "message": "You are not authorized to view this resource"
-            }
-            return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-        # UPCOMMING JOB DETAILS VIEW / WITH CHECKIN CHECKOUT REPORT PAGE BUTTON INCLUDED
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Job Detail View
         if pk:
-            try:
-                job_application = JobApplication.objects.get(applicant=staff, id=pk)
-                
-            except JobApplication.DoesNotExist:
-                response_data = {
+            job_application = (
+                JobApplication.objects
+                .select_related(
+                    'vacancy', 
+                    'vacancy__job', 
+                    'vacancy__job__company', 
+                    'vacancy__job_title', 
+                    'vacancy__uniform'
+                )
+                .prefetch_related('vacancy__skills')
+                .filter(applicant=staff, id=pk)
+                .first()
+            )
+            if not job_application:
+                return Response({
                     "status": status.HTTP_404_NOT_FOUND,
                     "success": False,
                     "message": "Job not found"
-                }
-                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-            
+                }, status=status.HTTP_404_NOT_FOUND)
+
             checkin_status = Checkin.objects.filter(application=job_application).first()
             checkout_status = Checkout.objects.filter(application=job_application).first()
-            
-            # serializer = JobApplicationSerializer(job_application)
+
             obj = {
                 'id': job_application.id,
                 'job_title': job_application.vacancy.job.title,
@@ -319,37 +327,50 @@ class StaffJobView(APIView): # jobapplication
                     'description': job_application.vacancy.uniform.description,
                     'image': job_application.vacancy.uniform.image.url if job_application.vacancy.uniform.image else None,
                 } if job_application.vacancy.uniform else None,
-                'skills': [x for x in job_application.vacancy.skills.all().values_list('name', flat=True)],
-                
+                'skills': list(job_application.vacancy.skills.values_list('name', flat=True)),
                 'date': job_application.vacancy.open_date,
                 'start_time': job_application.vacancy.start_time,
                 'end_time': job_application.vacancy.end_time,
                 'location': job_application.vacancy.location,
-                
                 "job_status": job_application.job_status,
                 "checkin_approve": job_application.checkin_approve,
                 "checkout_approve": job_application.checkout_approve,
                 "checkin_status": checkin_status.checkin_status if checkin_status else "Not Checked In",
                 "checkout_status": checkout_status.checkout_status if checkout_status else "Not Checked Out"
-
             }
-            response_data = {
+
+            return Response({
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job retrieved successfully",
                 "data": obj
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        # upcomming job list
-        job_application = JobApplication.objects.filter(applicant=staff,is_approve=True).select_related('vacancy','applicant')
+            }, status=status.HTTP_200_OK)
 
-        
-        # application_serializer = JobApplicationSerializer(job_application, many=True)
+        # Upcoming Job List
+        job_applications = (
+            JobApplication.objects
+            .filter(applicant=staff, is_approve=True)
+            .select_related(
+                'vacancy', 
+                'vacancy__job', 
+                'vacancy__job__company', 
+                'vacancy__job_title'
+            )
+        )
+
+        # Fetch all related checkins/checkouts in one query
+        checkins = Checkin.objects.filter(application__in=job_applications).select_related('application')
+        checkouts = Checkout.objects.filter(application__in=job_applications).select_related('application')
+
+        # Build maps to avoid repeated queries
+        checkin_map = {c.application_id: c for c in checkins}
+        checkout_map = {c.application_id: c for c in checkouts}
+
         applications = []
-        for application in job_application:
-            checkin_status = Checkin.objects.filter(application=application).first()
-            checkout_status = Checkout.objects.filter(application=application).first()
-            obj = {
+        for application in job_applications:
+            checkin = checkin_map.get(application.id)
+            checkout = checkout_map.get(application.id)
+            applications.append({
                 'id': application.id,
                 'job_title': application.vacancy.job.title,
                 'shift_price': application.vacancy.salary,
@@ -362,18 +383,17 @@ class StaffJobView(APIView): # jobapplication
                 "job_status": application.job_status,
                 "checkin_approve": application.checkin_approve,
                 "checkout_approve": application.checkout_approve,
-                "checkin_status": checkin_status.checkin_status if checkin_status else "Not Checked In",
-                "checkout_status": checkout_status.checkout_status if checkout_status else "Not Checked Out"
-            }
-            applications.append(obj)
-        
-        response_data = {
+                "checkin_status": checkin.checkin_status if checkin else "Not Checked In",
+                "checkout_status": checkout.checkout_status if checkout else "Not Checked Out"
+            })
+
+        return Response({
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "List of Upcomming Jobs",
+            "message": "List of Upcoming Jobs",
             "data": applications
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
+
     def post(self, request,pk, *args, **kwargs):
         """CKECKIN / CHECKIN REQUEST"""
         user = request.user
@@ -1263,3 +1283,43 @@ class JobReportView(APIView):
             "success": False,
             "message": "Unauthorized access"
         }, status=status.HTTP_403_FORBIDDEN)
+
+
+class ApplicationStatusAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.is_staff:
+            return Response({
+                "status": status.HTTP_403_FORBIDDEN,
+                "success": False,
+                "message": "Unauthorized access"
+            }, status=status.HTTP_403_FORBIDDEN)
+        staff = Staff.objects.filter(user=user).first()
+        if not staff:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Staff not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # count application pending and accepted status
+        application_status = JobApplication.objects.filter(applicant=staff).aggregate(
+            pending_count=Count(Case(
+                When(job_status='pending', then=1)
+            )),
+            accepted_count=Count(Case(
+                When(job_status='accepted', then=1)
+            )),
+        )
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Application status retrieved successfully",
+            "data": {
+                "pending_count": application_status['pending_count'],
+                "accepted_count": application_status['accepted_count'],
+            }
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+        
