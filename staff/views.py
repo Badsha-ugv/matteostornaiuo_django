@@ -1237,7 +1237,7 @@ class JobReportView(APIView):
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job Report retrieved successfully",
-                "data": report
+                "data": report if len(report) > 0 else {}
             }
             return Response(response_data, status=status.HTTP_200_OK)
         else:
@@ -1272,7 +1272,7 @@ class JobReportView(APIView):
                     "status": status.HTTP_200_OK,
                     "success": True,
                     "message": "No report found",
-                    "data": []
+                    "data": {}
                 }
                 return Response(response, status=status.HTTP_200_OK)
             
