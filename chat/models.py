@@ -26,6 +26,9 @@ class ChatRoom(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = ChatRoomManager() 
+
+    def __str__(self):
+        return f'Chat Room {self.id} with {self.participants.count()} participants'
     
 class ChatMessage(models.Model):
     room = models.ForeignKey(ChatRoom, related_name='messages', on_delete=models.CASCADE)
