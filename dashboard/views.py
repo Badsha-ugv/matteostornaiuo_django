@@ -697,3 +697,40 @@ class StatisticsAPIView(APIView):
             {"message": "You are not authorized to access this resource"},
             status=status.HTTP_403_FORBIDDEN,
         )
+
+
+# notifications/utils.py
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+def send_notification_to_user(user_id, message, link=None):
+    channel_layer = get_channel_layer()
+    data = {
+        "type": "send_notification",
+        "content": {
+            "message": message,
+            "link": link,
+        },
+    }
+    async_to_sync(channel_layer.group_send)(f"user_{user_id}_notifications", data)
+
+
+class NotifyUser(APIView):
+    def post(self, request):
+        user = request.user
+        message = request.data.get("message", "")
+        notification = Notification.objects.create(user=user, message=message)
+        print('saved to db')
+        send_notification_to_user(user.id, message)
+        print('sent to user')
+        response_data = {
+            "status": status.HTTP_201_CREATED,
+            "success": True,
+            "message": "Notification sent successfully",
+            "data": {
+                "id": notification.id,
+                "message": notification.message,
+                "created_at": notification.created_at.isoformat(),
+            },
+        }
+        return Response(response_data, status=status.HTTP_201_CREATED)

@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['admin.letme.no', '*']
 
 
 INSTALLED_APPS = [
+    "daphne",
     "unfold",  
     "unfold.contrib.filters", 
     "unfold.contrib.forms", 
@@ -122,7 +123,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "project.wsgi.application"
+ASGI_APPLICATION = "project.asgi.application"
+# WSGI_APPLICATION = "project.wsgi.application"
+
 
 
 
@@ -144,6 +147,16 @@ DATABASES = {
         'HOST': '16.16.199.236',
         'PORT': '5432',
     }
+}
+
+# channels - redis configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Redis server configuration
+        },
+    },
 }
 
 

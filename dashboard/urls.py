@@ -20,5 +20,8 @@ urlpatterns = [
     path('letme-company/', views.CompanyListedAPIView.as_view()),
     
 
+    path('notify/', views.NotifyUser.as_view()),
+    
+
     
 ]
